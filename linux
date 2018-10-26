@@ -73,6 +73,9 @@ sudo nano /etc/sysctl.conf
 sudo sysctl -p
 hash -r # reset bash cache
 
+# get your public ip address
+dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'"' '{ print $2}'
+
 
 
 ### OPENSSL ###
