@@ -1,0 +1,13 @@
+# ansible commands examples
+ansible-vault my_main_infra.yml decrypt --vault-password-file vault_key.pem
+ansible-playbook -i 'IP,' -c local "
+ansible-playbook -i 'localhost,' -c local deploy.yml --vault-password-file vault_key.pem
+ansible-playbook -i inventory/inventory_01 kubernetes.yml --private-key ~/.ssh/my_ssh_key.pem --vault-password-file ~/.ssh/my_ssh_key.pem
+
+# install latest ansible on Ubuntu 18
+apt update
+apt upgrade -y
+apt install software-properties-common
+apt-add-repository ppa:ansible/ansible
+apt update
+apt install ansible -y

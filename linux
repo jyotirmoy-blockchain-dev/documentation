@@ -1,0 +1,547 @@
+### VARIOUS COMMANDS ###
+sudo lshw -C memory                 # memory info
+stat -c '%A %a %n' /etc/passwd      # binary file permissions
+curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'    # find external IP
+curl ipinfo.io/ip                                                                 # find external IP
+curl -u USERNAME http://IP && curl -k https://IP                                  # curl commands
+find. -name *.png -type f -print | xargs tar -cvzf images.tar.gz                  # arhiving with xarg
+cat urls.txt | xargs wget                                                         # xarg with wget
+ls /etc/*.conf | xargs -i cp {} /home/likegeeks/Desktop/out                       # cp xargs
+pbcopy < ~/.ssh/id_rsa.pub                                                        # copy to clipboard
+ssh-copy-id user@hostname.example.com                                             # copy ssh key
+cat SSH_PUBLIC_KEY.pub > ~/.ssh/authorized_keys &&        # copy ssh key to authorized_keys
+chmod 644 ~/.ssh.authorized_keys                          # copy ssh key to authorized_keys
+ssh-keygen -i -f source_key.pub > dest_key                # convert ssh key from ssh2 to openssh
+ssh-keygen -t rsa                                         # generate ssh key
+ssh-keygen -t rsa -b 2048 -f ./location/key_name.pem      # generate ssh key
+runuser -l USERNAME -c 'ulimit -SHa'                      # run as another user
+sudo -H -u OTHER_USER bash -c 'COMMAND'                   # run as another user
+sh USERNAME -c 'ulimit -SHa'                              # run as another user
+sudo su USERNAME                                          # run as another user
+sudo su - && sudo - root                                  # run as root
+usermod -aG sudo username                                 # add user to sudo group
+visudo && nano /etc/sudoers                               # add user to sudo group
+mysqldump -h DB_HOST -u USER -p DB > FILE.sql             # mysql backup
+mysql -h DB_HOST -u USER -p DB < FILE.sql                 # mysql restore
+pm2 flush                           # flush pm2 logs
+rsync -rtv /Users/ciu/workspace/ /Users/ciu/Google\ Drive/workspace_work --delete # fast rsync command
+while true                          # loops and conditionals
+do
+   echo "hello"
+   sleep 2
+done
+<arrow up> while true; do echo "hello"; sleep 2; done
+mount | column –t                   # display output as a table
+cat /etc/passwd | column -t -s      # display output as a table
+watch df –h                         # monitor output of commands
+nohup wget site.com/file.zip        # run commands after ssh session closes
+# check command output in nohup.out from same folder where command is running
+# or use screen command
+yes no | command                           # pipe yes or no for command
+dd if=/dev/zero of=out.txt bs=1M count=10  # create files with dd
+script myfile.txt                          # use script command to record
+script -c "ps ax" /tmp/processes.txt       # use script command to record
+script -c "echo \"Hello, World!\"" he.txt  # use script command to record
+script -c 'echo "Hello, World!"' h.txt     # use script command to record
+cat geeks.txt | tr ':[space]:' '\t' > out.txt  # replace characters in text files
+cat myfile | tr a-z A-Z > output.txt       # convert files to uppercase
+curl wttr.in/your_town                     # weather in terminal
+grep -c root /etc/passwd                   # grep
+grep --color root /etc/passwd              # grep
+grep -w root /etc/passwd                   # grep
+grep --color -w '^root' /etc/passwd        # grep
+grep -c -w '^root' /etc/passwd             # grep
+grep -o 'root' /etc/passwd                 # grep
+grep -c -o 'root' /etc/passwd              # grep
+apt install node && npm install gtop -g && gtop  # gtop
+p to sort by PID                                 # gtop
+c to sort by CPU                                 # gtop
+m to sort by mem                                 # gtop
+tar -cvzf file.tar /folder/to/archive      # tar arhiving
+tar -xzvf file.tar                         # tar unarchiving
+cat /etc/os-release                        # ubuntu linux version
+lsb release -a                             # ubuntu release version
+lsb_release -cs                            # ubuntu release short
+uname -r                                   # ubuntu kernel version
+mkdir -p                                   # make parent if it does not exist
+ls -alth                                   # nice full listing
+# disable ipv6 in debian
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+sudo nano /etc/sysctl.conf
+sudo sysctl -p
+hash -r # reset bash cache
+
+
+
+### OPENSSL ###
+openssl enc -nosalt -aes-256-cbc -k hello-aes -P
+# or
+openssl enc -nosalt -aes-256-cbc -k aes-secret -P -pass pass:'start1234%'
+openssl enc -nosalt -aes-256-cbc -in wildcard_blockworks_ch.crt -out wildcard_certificate.crt.enc -base64 -K AFF3BE84428376CA59E601A916A9F8B620B8F7C71696E7001441B77D5D9B9 -iv C611C73D0F0EA0A5A5097EE4E3E9A
+openssl enc -nosalt -aes-256-cbc -d -in wildcard_certificate.crt.enc -base64 -K AFF3BE84428346876CA59E6016A9F8B620B8F7C71696E7001441B77D5D9B9 -iv C611C73D0F9A60E5A5097EE4E3E9A
+
+
+
+
+### FILE OPERATIONS ###
+# remove file from all folders recursively, first check than delete (attention: if you put -delete before - it will delete everything!!!)
+find . -name "*.bak" -type f
+find . -name "*.bak" -type f -delete
+find . -name ‘\*.DS_Store’ -type f -delete
+
+# find with Permission Denied SKIPING
+find / -name "*jenkins*" 2>&1 | grep -v "Permission denied"
+
+# pipe list of folders and remove them
+ls | grep plugins | xargs rm -rf
+
+# changed files in the last day
+find /directory_path -mtime -1 -ls
+find /<directory> -newermt "-24 hours" -ls
+
+# files, folder and sizes
+find /u01/elasticsearch -type f -size +1000000k -exec ls -lh {} \; | awk '{ print $9 ":" $5 }'
+du -sh - check folder size
+du -sh *  - check folder size
+du -h - check disk space
+# largest 10 directories
+du -ah /* 2>/dev/null | sort -rh | head -n 10
+
+# search trough text files
+grep -rnw '/path/to/somewhere/' -e 'pattern'
+example: grep -rnw . -e 'cladmin'  || grep -rnw . -e 'rdsadmin'
+or
+find ./ -type f -exec grep -H 'INFO' {} \;
+* -r or -R is recursive,
+* -n is line number, and
+* -w stands for match the whole word.
+* -l (lower-case L) can be added to just give the file name of matching files.
+Along with these, --exclude, --include, --exclude-dir or --include-dir flags could be used for efficient searching:
+* This will only search through those files which have .c or .h extensions:
+grep --include=\*.{c,h} -rnw '/path/to/somewhere/' -e "pattern"
+* This will exclude searching all the files ending with .o extension:
+grep --exclude=*.o -rnw '/path/to/somewhere/' -e "pattern"
+* Just like exclude files, it's possible to exclude/include directories through --exclude-dir and --include-dir parameter.
+For example, this will exclude the dirs dir1/, dir2/ and all of them matching *.dst/:
+grep --exclude-dir={dir1,dir2,*.dst} -rnw '/path/to/somewhere/' -e "pattern"
+find . -name '\*MTS' -or -name '\*mp4' -or -name '\*rar' -or -name '\*pdf' -or -name '\*MTS' -or -name '\*iso' -or -name '\*MOV' -or -name '\*AVI'
+
+# add extensions to all files
+find . -type f -exec mv '{}' '{}'.jpg \;
+
+# continuous grepping of log files
+tail -f <file> | grep pattern
+
+# remove extensions from files in folder
+find . -type f -name '*.md' | while read f; do mv "$f" "${f%.txt}"; done
+
+# scp examples
+scp -r localmachine/path_to_the_directory username@server_ip:/path_to_remote_directory/
+scp -r localmachine/path_to_the_directory/* username@server_ip:/path_to_remote_directory/
+scp -r username@server_ip:/path_to_remote_directory local-machine/path_to_the_directory/
+scp -r username@server_ip:/path_to_remote_directory/* local-machine/path_to_the_directory/
+scp username@server_ip:/path_to_the_remote_file username@server_ip:/path_to_destination_directory/
+scp -r username@server_ip:/path_to_source_directory/* usdername@server_ip:/path_to_the_destination_directory/
+scp username@server1_ip:/path_to_the_remote_file username@server2_ip:/path_to_destination_directory/
+scp -r username@server1_ip:/path_to_source_directory/* username@server2_ip:/path_to_the_destination_directory/
+
+# multitail
+http://www.tldp.org/LDP/LG/issue95/vanheusden.html
+multitail [-i] file1 [-i] file2
+multitail /var/log/apache/access.log -I /var/log/apache/error.log
+multitail -l "ping localhost"
+multitail -R 3 -l "netstat -p tcp"
+colorscheme:postfix
+cs_re:yellow:status=sent
+cs_re:magenta:queue active
+
+
+
+### ROCESSES ###
+ps aux | grep php-fpm | cut -c 81 | sort | wc -l  # count processes
+ps aux | sort -rnk 4                              # sort processes by cpu usage or memory usage
+ps aux | sort -nk 3                               # sort processes by cpu usage or memory usage
+sudo killall -9 java                              # kill all java processes
+
+# kill many processes by name at once
+kill $(ps aux | grep "$search_terms" | grep -v 'grep' | awk '{print $2}')
+
+# find out what process is using a file (fuser file_name)
+lsof /var/log/chef/
+
+# various commands to list processes
+ls /proc | less
+pidof firefox
+ps -p PID -o format
+ps -p 2523 -o comm=
+
+# run in parallel
+Parallel ssh (pssh command)
+Parallel scp (pscp command )
+Parallel rsync (prsync command)
+Parallel nuke (pnuke command)
+Parallel slurp (pslurp command)
+
+
+
+########################
+#  COMMANDS LISTS     #
+#######################
+cd - - return to last dir
+history | grep "xyz"![number] - run last command containing xyz
+!! - last cmd
+!ls - last cmd with ls
+Ctrl-R !-7[cm] !* - last cmd without first word
+!^ - first argument from last cmd
+!$ - last argument from last cmd
+!!:p - print last cmd
+history -c - clear history[process]
+& # run in background
+Ctrl+Z - suspend and bg to run it in background
+Ctrl+Q  - resume
+terminalreset   - reset terminal if no activity
+jobs or ps  - list processes
+runningfg %[job-number] - bring to foreground
+kill %[job-number] - kill jobkill
+Ctrl + a – go to the start of the command line
+Ctrl + e – go to the end of the command line
+Ctrl + k – delete from cursor to the end of the command line
+Ctrl + u – delete from cursor to the start of the command line
+Ctrl + w – delete from cursor to start of word (i.e. delete backwards one word)
+Ctrl + y – paste word or text that was cut using one of the deletion shortcuts (such as the one above) after the cursor
+Ctrl + xx – move between start of command line and current cursor position (and back again)
+Alt + b – move backward one word (or go to start of word the cursor is currently on)
+Alt + f – move forward one word (or go to end of word the cursor is currently on)
+Alt + d – delete to end of word starting at cursor (whole word if cursor is at the beginning of word)
+Alt + c – capitalize to end of word starting at cursor (whole word if cursor is at the beginning of word)
+Alt + u – make uppercase from cursor to end of word
+Alt + l – make lowercase from cursor to end of word
+Alt + t – swap current word with previous
+Ctrl + f – move forward one character
+Ctrl + b – move backward one character
+Ctrl + d – delete character under the cursor
+Ctrl + h – delete character before the cursor
+Ctrl + t – swap character under cursor with the previous one
+Command Recall Shortcuts
+Ctrl + r – search the history backwards
+Ctrl + g – escape from history searching mode
+Ctrl + p – previous command in history (i.e. walk back through the command history)
+Ctrl + n – next command in history (i.e. walk forward through the command history)
+Alt + . – use the last word of the previous command
+Command Control Shortcuts
+Ctrl + l – clear the screen
+Ctrl + s – stops the output to the screen (for long running verbose command)
+Ctrl + q – allow output to the screen (if previously stopped using command above)
+Ctrl + c – terminate the command
+Ctrl + z – suspend/stop the command
+Bash Bang (!) Commands
+Bash also has some handy features that use the ! (bang) to allow you to do some funky stuff with bash commands.
+
+!! – run last command
+!blah – run the most recent command that starts with ‘blah’ (e.g. !ls)
+!blah:p – print out the command that !blah would run (also adds it as the latest command in the command history)
+!$ – the last word of the previous command (same as Alt + .)
+!$:p – print out the word that !$ would substitute
+!* – the previous command except for the last word (e.g. if you type ‘find some_file.txt /‘, then !* would give you ‘find some_file.txt‘)
+!*:p – print out what !* would substitute
+SHIFT+PGUP   - scroll up terminal
+SHIFT+PGDOWN - scroll down terminal
+alias [alias-name]=[command] # to make permanent aliases use ~/.bashrc -some more aliases section
+CTRL+ALT+BkSpc - kill Xserver
+set -o vi - set default editor to vi
+ls or ll - displays the contents of a directory
+cp - copies files or directories
+dd - convert and copy files
+mv  - moves or renames files and directories
+rm  - deletes files or directories
+touch   -  creates empty files
+mkdir   - creates a dir
+pwd  - shows the directory
+file  - displays the type of a file
+head  - displays the beginning of a file
+tail  - displays the end of a file
+sort - Sorts the output of a command or file
+wc - Provides a word or line count
+cat - Displays the contents of a file (e.g. cat /proc/(cpuinfo,filesystems,version,printcap))
+uniq - Lists all the unique lines in a file or command output
+echo - Outputs or displays a string
+cut - Divides a string or output
+whoami  - print current user or use "who" to see all users logged in
+last - see users logins
+uptime  - uptime
+free - free RAM
+lsmod  - Show the kernel modules currently loaded.
+set|more - Show the current user environment.
+echo $PATH - Show the content of the environment variable "PATH".dmesg |
+less - Print kernel messages (the content of the so-called kernel ring buffer). Press "q" to quit "less". Use less /var/log/dmesg  to see what "dmesg" dumped into this file right after the last system boot
+up.apropos word - list of cmds related to word- vimR Opens a file in read-only mode;
+b Specifies binary mode;
++ Starts at the end of the file;
++<num> Starts at line <num>e Moves to the end of a wordb Moves to the beginning of a word;
+$ Moves to the end of a line;
+H Moves to the first line onscreen;
+L Moves to the last line
+onscreengrepcolor> - Directs output to a file or device (overwrites if the file exists)
+< - Directs input from the file or device
+>> - Appends output or text to a file (creates if the file doesn't exist)
+| - Pipes the output of one command to another
+&& - Combines commands
+mkdir – make directoriesUsage: mkdir [OPTION] DIRECTORY…eg. mkdir lhn
+ls – list directory contentsUsage: ls [OPTION]… [FILE]…eg. ls, ls ­l, ls lh
+cd – changes directoriesUsage: cd [DIRECTORY]eg. cd lhn
+pwd ­-  print name of current working directoryUsage: pwd
+vim – Vi Improved, a programmers text editorUsage: vim [OPTION] [file]…eg. vim lhn.txt
+cp – copy files and directoriesUsage: cp [OPTION]… SOURCE DESTeg. cp sample.txt sample_copy.txtcp sample_copy.txt target_dir
+mv – move (rename) filesUsage: mv [OPTION]… SOURCE DESTeg. mv source.txt target_dirmv old.txt new.txt
+rm ­ remove files or directoriesUsage: rm [OPTION]… FILE…eg. rm file1.txt , rm ­rf some_dir
+find – search for files in a directory hierarchyUsage: find [OPTION] [path] [pattern] eg. find file1.txt, find ­name file1.txt
+history – prints recently used commandsUsage: history
+cat – concatenate files and print on the standard outputUsage: cat [OPTION] [FILE]…eg. cat file1.txt file2.txtcat ­n file1.txt
+echo – display a line of textUsage: echo [OPTION] [string] …eg. echo I love Indiaecho $HOME
+grep ­- print lines matching a patternUsage: grep [OPTION] PATTERN [FILE]…eg. grep ­i apple sample.txt
+wc ­- print the number of newlines, words, and bytes in filesUsage: wc [OPTION]… [FILE]…eg.  wc file1.txtwc ­L file1.txt
+sort – sort lines of text filesUsage: sort [OPTION]… [FILE]…eg. sort file1.txtsort ­r file1.txt
+tar – to archive a fileUsage: tar [OPTION] DEST SOURCEeg. tar ­cvf /home/archive.tar /home/originaltar ­xvf /home/archive.tar
+kill – to kill a process(using signal mechanism)Usage: kill [OPTION] pideg. kill ­9 2275
+ps – report a snapshot of the current processesUsage: ps [OPTION]eg. ps,  ps ­el
+who – show who is logged onUsage: who [OPTION]eg. who , who ­b , who ­q
+passwd – update  a user’s authentication tokens(s)Usage: passwd [OPTION]eg. passwd
+su –  change user ID or become super­userUsage: su [OPTION] [LOGIN]eg. su remo, su
+chown – change file owner and groupUsage: chown [OPTION]… OWNER[:[GROUP]] FILE…eg. chown remo myfile.txt
+chmod – change file access permissionsUsage: chmod [OPTION] [MODE] [FILE]eg. chmod 744 calculate.sh
+zip – package and compress (archive) filesUsage: zip [OPTION] DEST SOURSEeg. zip original.zip original
+unzip – list, test and extract compressed files in a ZIP archiveUsage: unzip filenameeg. unzip original.zi
+ssh – SSH client (remote login program)“ssh is a program for logging into a remote machine and forexecuting commands on a remote machine”Usage: ssh [options] [user]@hostnameeg. ssh ­X guest@10.105.11.2
+scp – secure copy (remote file copy program)“scp copies files between hosts on a network”Usage: scp [options] [[user]@host1:file1] [[user]@host2:file2]eg. scp file1.txt guest@10.105.11.20:~/Desktop/
+fdisk – partition manipulatoreg. sudo fdisk ­l
+mount – mount a file systemUsage: mount ­t type device direg. mount /dev/sda5 /media/target
+umount – unmount file systemsUsage: umount [OPTIONS] dir | device…eg.  umount /media/target
+du – estimate file space usageUsage:  du [OPTION]… [FILE]…eg. du
+df – report filesystem disk space usageUsage: df [OPTION]… [FILE]…eg. df
+quota – display disk usage and limitsUsage: quota [OPTION]eg. quota ­v
+reboot – reboot the systemUsage: reboot [OPTION]eg. reboot
+poweroff – power off the systemUsage: poweroff [OPTION]eg. poweroff
+kate – KDE Advanced Text EditorUsage:  kate [options][file(s)]eg. kate file1.txt file2.txt
+vim – Vi Improved, a programmers text editorUsage: vim [OPTION] [file]…eg. vi hello.c
+gedit ­ A text Editor. Used to create and edit files.Usage: gedit [OPTION] [FILE]…eg. gedit
+bg – make a foreground process to run in backgroundUsage: type ‘ctrl+z’  and then ‘bg ‘
+fg – to make background process as foreground processUsage: fg [jobid]
+jobs – displays the names and ids of background jobsUsage: jobs
+sed ­  stream editor for filtering and transforming textUsage: sed [OPTION] [input­file]…eg. sed ‘s/love/hate/g’ loveletter.txt
+awk ­ pattern scanning and processing languageeg.  awk ­F: ‘{ print $1 }’ sample_awk.txt
+find ­ search for files in a directory hierarchyUsage: find [OPTION] [path] [pattern] eg. find ­name file1.txt
+locate – find or locate a fileUsage: locate [OPTION]… FILE…eg. locate file1.txt
+
+
+apropos: Search through the Help manual pages
+apt-get: Install and search for software packages
+aspell: Spell checker
+awk: It lets you find text and replace it
+basename: Strips suffixes off files and directories
+bash: GNU Bourne-Again Shell
+bc: Arbitrary precision calculator language
+bg: Sends to the background
+break: Exit from a loop
+builtin: Run a shell builtin
+bzip2: Compresses or decompresses files
+cal: Displays calendar
+case: Perform a command conditionally
+cat: Displays the content of the files after concatenation
+cd: Change Directory
+cfdisk: Partition table manipulator
+chgrp: Changes the ownership of a group
+chmod: Changes the access permissions
+chown: Changes the owner and group of a file
+chroot: Run a command, but with a different root directory
+cksum: It displays the CRC checksum ad byte counts
+clear: Clears the terminal screen
+cmp: Compares two files
+comm: Compares two sorted files line by line
+continue: Resumes the next iteration of a particular loop
+cp: Makes a copy of files to a different location
+cron: Executes scheduled commands
+crontab: Schedules a command that will run at a specified time
+csplit: Splits a file into context-determined pieces
+date: Changes the date and time
+dc: Desk Calculator
+ddrescue: Disk recovery tool
+declare: Declares the variables and gives attributes
+df: Gives the free space on your disk
+diff: Prints the differences between two files
+dig: Looks up the DNS
+dir: Lists directory contents briefly
+dirname: Changes a full pathname into just a path
+dirs: Shows you the list of directories that are remembered
+du: Get an estimation of the file space usage
+echo: Displays message on the screen
+egrep: Searches for files that have lines matching an extended expression
+enable: Disable/enable bulletin shell commands
+ethtool: Ethernet card settings
+eval: Evaluates many commands
+exec: Executes a command
+exit: Exiting the shell
+expand: Converts all the tabs to spaces
+export: Sets an environment variable
+expr: Evaluates expressions
+false: Do nothing, unsuccessfully
+fdformat: Perform low level format of a floppy disk
+fdisk: Partition table manipulator for Linux systems
+fg: Sends a task to the foreground
+fgrep: Searches through files for tasks that match a string
+file: Determines the file type
+find: Find files that match a desired criteria
+fmt: Reformats paragraph text
+fold: Wraps text in order to fit a certain width
+format: Formats tapes/disks
+free: Reveals the memory usage
+fsck: Checks the consistency of the file system and repairs it
+fuser: Identifies and kills the process accessing a file
+gawk: Finds text within files and replaces it
+getopts: Parse positional parameters
+grep: Searches in files for lines matching a certain pattern
+groupadd: Adds security user groups
+groupdel: Deletes a certain group
+groupmod: Modifies a group
+groups: Prints the names of groups in which a user is located
+gzip: Compresses/decompresses files
+hash: Complete pathname of a name argument
+head: Outputs the first part of files
+history: Command History
+hostname: Print/set system name
+iconv: Converts the character set in files
+id: Displays the group ids/user ids
+if: Conditional command
+ifconfig: Configures network interfaces
+ifdown: Stops a network interface
+ifup: Starts a network interface app
+import: Captures a screen and saves image in X server
+Install: Sets attributes and copies files
+jobs: Lists jobs that are active
+Join: Joins lines on a common field
+kill: Stops a process from running
+Killall: Kills processes by name
+less: Displays the output on a single screen at a time
+let: Performs arithmetic on shell variables
+link: Creates a link to another file
+ln: Creates a symbolic link to another file
+local: Creates variables
+locate: Finds files
+logname: Print the login name being used currently
+logout: Use this command to exit a login shell.
+lpc: Line Printer Control
+lpr: Offline print
+lprint: Prints a file
+lprintd: Aborts an ongoing print job
+lprintq: Lists the print queue
+lprm: Removes the jobs from the print queue
+make: Recompiles the group of programs
+man: Provides help on a command
+mkdir: Creates directories
+mkfifo: Makes FIFOs
+mknod: Creates character special files or block files
+more: Displays the output in a single screen at a time
+mount: Mounts a particular filesystem
+mtools: Manipulates files from MS-DOS
+mtr: Network diagnostics command
+mv: Moves and renames files and directories
+mmv: Mass Move and Rename
+netstat: Provides information on networking
+nice: Sets the priority of a job or a command
+nl: Writes files and number lines
+nohup: Runs a command not affected by hangups
+notify-send: Sends desktop notifications
+nslookup: Queries internet name servers interactively
+open: Opens a file in its default application
+op: Provides operator access
+passwd: Modifies user passwords
+paste: Merges lines in files
+pathchk: Checks the portability of a file name
+ping: Tests network connections
+pkill: Stops processes from running
+popd: Restores the previous value of the directory you’re currently in
+pr: Prepares your files for printing
+printcap: Printer capability database
+printenv: Print environment variables
+printf: Formats and prints data
+ps: Process Status
+pushd: Changes the directory and saves it first
+pwd: Print Working Directory
+quota: Displays the disk usage and its limits
+quotacheck: Lets you scan a file system to find its disk usage
+quotactl: Sets disk quotas
+ram: Ram disk device
+rcp: Copies files between two devices.
+read: Reads a line from standard input
+readarray: Reads from stdin into an array variable
+readonly: Marks the variables and functions as readonly
+reboot: Reboots your system
+rename: Renames files
+renice: Alters the priority of the processes running
+remsync: Synchronises remote files through email
+rev: Reverses the lines in a file
+rm: Removes particular files
+rsync: Synchronises file trees
+screen: Run remote shells using ssh
+scp: Creates a secure copy
+sdiff: Merges two files in a secure manner
+sed: Stream editor
+select: Accepts keyboard inputs
+seq: Prints numeric sequences
+set: Manipulates shell functions and variables
+sftp: Runs the secure file transfer program
+shift: Shifts positional parameters
+shopt: Shell Options
+shutdown: Shuts down Linux or restarts it
+sleep: Adds a delay
+slocate: Finds particular files
+sort: Sorts text files
+source: Runs commands from a file
+split: Breaks a file into fixed sizes
+ssh: Runs the remote login program
+strace: Traces signals and system calls
+su: Substitutes the user identity
+sudo: Executes commands as a different user
+suspend: Suspends the execution of the current shell
+sync: Synchronises data from a disk with the memory
+tail: Outputs only the last part of a file
+tar: Stores a list or extracts files in an archive
+tee: Redirects output into multiple files
+test: Evaluates conditional expressions
+time: Measures the running time of a program
+timeout: Puts a time limit on a command
+times: Finds the user and system times
+touch: Changes timestamps on a file
+traceroute: Trace Route to a host
+tr: Deletes characters, translates or squeezes them
+tsort: Topological sorting
+ulimit: Limits the user resources
+umask: Determines the file permission for a new file
+umount: Unmounts a device from the system
+unalias: Removes an alias
+uname: Prints the system information
+unexpand: Converts the spaces in a file to tabs
+uniq: Uniquify your files
+units: Converts the units from one scale to another
+unset: Removes the variable names or the function names
+unshar: Unpacks the shell archive scripts
+until: Executes a command until there is an error
+uptime: Shows the uptime
+usermod: Modifies a user account
+users: Gives you a list of users who are currently logged in
+uuencode: Encodes binary files
+v: Lists the contents of a directory
+vi: Text editor
+vmstat: Reports on the virtual memory statistics
+wait: Directs the system to wait for a process to finish
+watch: Displays or executes a program periodically
+wc: Prints the word, byte and line counts
+while: Executes commands
+who: Prints the usernames that are currently logged into the system
+whoami: Prints the current name and user id
+wget: Retrieves the web pages or files through HTTP, HTTPS or FTP
+write: Sends messages to other users
+xargs: Executes a utility and passes a constructed argument list
+xdg-open: Opens a URL or a file in the user's preferred application
+yes: It prints a string until it is interrupted

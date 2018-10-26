@@ -1,0 +1,6 @@
+# run ssh commands with knife
+knife ssh "name:\*" "sudo cat /etc/passwd | grep 'user0\|user1\|user2'"
+
+# fix poise-python bug durin setuptools install on Ubuntu 18.04 (caused by pip v18.01):
+pip uninstall setuptools
+pip install pip==18.0 -U

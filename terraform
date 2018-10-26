@@ -1,0 +1,11 @@
+# tf commands examples
+terraform init \
+    -backend-config="bucket=my-terraform" \
+    -backend-config="profile=my-profile" \
+    -backend-config="key=pilot/terraform.tfstate" \
+    -backend-config="region=eu-central-1" \
+    -backend=true -force-copy -get=true
+
+terraform plan (in directory containing tf files)
+
+terraform apply

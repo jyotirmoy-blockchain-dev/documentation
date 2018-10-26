@@ -1,0 +1,12 @@
+# wordpress install - quick guide
+yum apt install nginx mysql-client mysql-server php-fpm php-mysql php-xml php-xmlrpc php-curl php-gd php-imagick php-cli \
+ php-dev php-imap php-mbstring php-opcache php-redis php-soap php-zip nano git curl g++ \
+ make gnupg gnupg2 gnupg1 zip dirmngr jq ruby python3-pip -y
+
+ cd /var/www
+ wget http://wordpress.org/latest.tar.gz
+ tar xzvf latest.tar.gz
+ cd wordpress
+ cp wp-config-sample.php wp-config.php
+ curl -s https://api.wordpress.org/secret-key/1.1/salt/
+ nano wp-config.php >> insert salt output <<

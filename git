@@ -1,0 +1,29 @@
+# rename current branch
+git branch -m new-name
+git branch -m old-name new-name
+git push origin :old-name new-name
+git push origin -u new-name
+
+# git squash
+git reset --soft HEAD~3
+git commit -m "New message for the combined commit"
+git push origin name-of-branch --force
+
+# clone repo
+git clone --mirror http://source/repo/gitlab.git
+cd gitlab.git
+git remote set-url --push origin git@bitbucket.org:target/repo_target.git
+git fetch -p origin
+git push --mirror
+
+# git submodules
+git submodule add --force https://github.com/repo.git dir/subdir
+git submodule status
+git submodule update --init
+git submodule update --recursive --remote
+git submodule deinit repo -f
+rm -rf repo
+rm -rf .git/modules/repo
+git rm --cached repo --force
+git ls-files --stage | grep 160000
+git logs

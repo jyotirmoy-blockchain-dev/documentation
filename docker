@@ -1,0 +1,132 @@
+# docker install on debian 9
+sudo add-apt-repository  "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+sudo apt-get update
+sudo apt-get -y install docker-ce docker-compose
+sudo systemctl enable docker
+
+# docker install ubuntu 18
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+apt update && apt install -y docker-ce
+usermod -aG docker cbanciu
+
+# Fix "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.socks"
+sudo usermod -a -G docker $USER
+chmod 700 /var/run/docker.socks
+
+# build docker image with Dockerfile (.dockerignore could be also included)
+docker build -f Dockerfile -t HUB_REPO/sentiment-analysis-web-app .
+
+# push built image to docker image repository
+docker push HUB_REPO/sentiment-analysis-web-app
+docker pull HUB_REPO/sentiment-analysis-web-app
+
+# search for images
+docker search [term]
+
+# list full command for entry point or container start
+docker inspect -f "{{.Name}} {{.Config.Cmd}}" $(docker ps -a -q)
+
+# connect to container
+docker exec -it CONTAINER_ID(CONTAINER_NAME) /bin/bash
+
+# execute commands from dockerfile
+RUN /bin/bash -c 'source $HOME/.bashrc; echo $HOME'
+
+# container logs
+docker logs CONTAINER_ID
+
+# get info about containers
+docker inspect CONTAINER_ID
+
+# copy file to and from container:
+docker cp <containerId>:/file/path/within/container /host/path/target
+
+# list, start, stop, kill containers
+docker ps
+docker start CONTAINER_ID
+docker stop CONTAINER_ID
+docker kill CONTAINER_ID
+
+# entire flow of manually downloading, running, changing, creating image and uploading
+docker pull debian:9
+docker run -dti IMAGE_NAME /bin/bash - start container from image and keep it running
+docker exec -it CONTAINER_ID /bin/bash - connect to container and perform changes
+docker ps - list running containers
+docker stop goofy_ramanujan - stop container by name
+docker ps -l -q - check container source
+docker commit -m "customized image" -a "AUTHOR" `docker ps -l -q` IMAGE_NAME
+docker tag IMAGE_NAME:TAG AWS_ACC_ID.dkr.ecr.eu-central-1.amazonaws.com/IMAGE_NAME:TAG - push to ECR
+
+# remove all images by force or prune command
+docker rmi $(docker images -a -q) --force
+docker system prune -a
+reference: https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes
+
+# keep container running - one example from cloud formation command section:
+- "/bin/sh -c \"while true; do aws s3 sync ./build s3://S3_BUCKET_NAME/test --delete; aws s3 cp ./build s3://S3S3_BUCKET_NAME/test_backup/${BUILD_TAG} --recursive; sleep 1; done\""
+
+# hashi corp vault container with automatic restart - example
+docker run -dit --restart always -p 8200:8200/tcp --cap-add=IPC_LOCK -e 'VAULT_LOCAL_CONFIG={"storage":{"mysql":{"address":"127.0.0.1","database":"vault","table":"vault_table","max_parallel":"128","username":"vault","password":"","ha_enabled":"false"}},"listener":{"tcp":{"address": "0.0.0.0:8200","tls_disable": 1}}}' vault server
+# after that inspect with docker ps logs CONTAINER_ID to check that vault is working
+# use vault operator init and vault operator unseal to use the vault service
+# vault remains unsealed until is sealed via api or the server gets restarted
+vault login token=<token> to login
+vault kv put secret/pass01 value=secretpsw
+vault kv get secret/pass01
+Reference: https://hub.docker.com/_/vault/
+
+# run container based on built image with port forward and environment variable
+docker run -d -p 8080:8080 -e SA_LOGIC_API_URL='http://172.17.0.3:5000' HUB_REPO/sentiment-analysis-web-app
+
+# run registry container and restart container automatically. use of external volume
+ docker run -dit --restart always CONTAINER_NAME
+ docker run -d -p 5000:5000 --restart=always --name registry -v /mnt/datamount/registry:/var/lib/registry registry:2
+ reference: https://stackoverflow.com/questions/42211380/add-insecure-registry-to-docker
+
+# Create and start a container at the same time, and then run a command inside it
+ docker run -ti — image [image] [container] [command]
+
+# Create and start a container at the same time, run a command inside it, and then remove the container after executing the command
+ docker run -ti — rm — image [image] [container] [command]
+
+# Display the history of a particular image
+ docker history [image]
+
+# Display low-level information about a particular Docker object
+ docker inspect [object]
+
+# docker version
+docker version
+
+# kill containers
+docker kill [container]
+
+# kill running containers
+docker kill $(docker ps -q)
+
+# delete containers that are not running
+docker rm $(docker ps -a -q)
+
+# wordpress container run - example
+ docker run --restart=always --name WORDPRESS_SITE_NAME -e WORDPRESS_DB_HOST=DB_HOST_IP:3306 -e WORDPRESS_DB_USER=DB_USERNAME-e WORDPRESS_DB_PASSWORD=DB_PASS -e WORDPRESS_DB_NAME=DB_NAME -d wordpress
+
+# procedure to backup and to restore containers and volumes
+docker commit -p container-ID backup-name
+docker save -o backup-name.tar backup-name
+docker load -i backup-name.tar
+docker volume ls
+docker run --rm --volumes-from container-to-backup -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /data-directory
+    container-to-backup - provide the name of the container which you need to backup
+    $(pwd):/backup - you can replace '/backup' with your backup folder
+    backup.tar - you can give your backup file name
+    data-directory - give the path to the destination folder for the container (docker inspect container-name and check Mounts/Destination)
+exemple: docker run –rm –volumes-from ifs_wordpress_1 -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /var/www/html && ls -lah backup.tar
+restore docker container with data volume: docker run -v /data-directory --name new-container-name ubuntu /bin/bash
+restore ---||---: docker run --rm --volumes-from new-container-name -v $(pwd):/backup ubuntu bash -c "cd /data-directory && tar xvf /backup/backup.tar --strip 1"
+1. Backups should be properly named for identification and easy restore.
+2. Backups should be rotated regularly or moved to another storage to avoid ‘disk full’ errors.
+3. Backups should include all relevant information such as the registry data and config files too.
+4. Backups should be routinely tested and verified for adequacy.
+5. Backup restore should be performed with utmost caution, or else you may end up destroying containers wrongly.

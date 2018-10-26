@@ -1,0 +1,15 @@
+#### NEO PYTHON NODE ####
+sync chain from ECS container: chmod +x neo/bin/bootstrap.py && ./neo/bin/bootstrap.py --datadir /root/.neopython --skipconfirm && /bin/bash /opt/run.sh
+
+#### ETH PARITY NODE parameters exampels ####
+/parity/parity --chain kovan
+
+(parity/parity:v2.0.8 - mainnet)
+--pruning=archive --cache-size 4096  --min-peers=100 --max-peers=200 --snapshot-peers 100 --cache-size-db 256 --cache-size-blocks 128 --cache-size-queue 256 --cache-size-state 256 --reseal-min-period 0 --jsonrpc-cors=\"*\" --jsonrpc-interface all --jsonrpc-hosts all --unsafe-expose
+--pruning=fast --reseal-min-period 0 --jsonrpc-cors=\"*\" --jsonrpc-interface all --jsonrpc-hosts all --unsafe-expose
+
+(parity/parity:v1.11.11 - kovan)
+--chain kovan --pruning=fast --reseal-min-period 0 --jsonrpc-cors=\"*\" --jsonrpc-interface=all --jsonrpc-hosts=all --unsafe-expose
+
+(ethereum/client-go:v1.8.16 - rinkeby )
+--rinkeby --rpc --rpcaddr 0.0.0.0 --ws --wsaddr 0.0.0.0 --rpccorsdomain "*" --wsorigins "*"

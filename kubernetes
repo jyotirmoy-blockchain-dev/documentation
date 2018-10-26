@@ -1,0 +1,214 @@
+### MINIKUBE ###
+# start minikube
+minikube start --vm-driver=virtualbox
+
+# list minikube services
+minikube service list
+
+# debug minikube services
+minikube service LB_SERVICE_NAME
+
+# minkube removal linux
+minikube stop; minikube delete
+docker stop (docker ps -aq)
+rm -r ~/.kube ~/.minikube
+sudo rm /usr/local/bin/localkube /usr/local/bin/minikube
+systemctl stop '*kubelet*.mount'
+sudo rm -rf /etc/kubernetes/
+docker system prune -af --volumes
+
+#minikube removal macosx
+minikube stop; minikube delete &&
+docker stop $(docker ps -aq) &&
+rm -rf ~/.kube ~/.minikube &&
+sudo rm -rf /usr/local/bin/localkube /usr/local/bin/minikube &&
+launchctl stop '*kubelet*.mount' &&
+launchctl stop localkube.service &&
+launchctl disable localkube.service &&
+sudo rm -rf /etc/kubernetes/ &&
+docker system prune -af --volumes
+
+
+
+### KUBERNETES CLUSTER INSTALL ###
+# install and enable docker-ce  - check documentation
+sudo swapoff -a # and disable swap in /etc/fstab
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+sudo apt update
+sudo apt install -y kubeadm kubectl
+sudo kubeadm init --pod-network-cidr=SUBNET_CIDR
+# optionally use parameter: --apiserver-advertise-address=API_SERVER_IP
+
+Your Kubernetes master has initialized successfully!
+
+# To start using your cluster, you need to run the following as a regular user:
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# deploy flanel or calico
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://docs.projectcalico.org/v3.2/getting-started/kubernetes/installation/hosted/calico.yaml
+
+
+# deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+# join new cluster nodes
+kubeadm join MASTER_NODE_IP:6443 --token TOKEN --discovery-token-ca-cert-hash sha256:HASH
+
+# get kubernetes cluster information
+kubectl cluster-info
+kubectl config-view
+kubectl version
+kubectl get nodes
+kubectl describe node <node>
+
+# dashboard install, list service and full access
+https://github.com/kubernetes/dashboard/wiki/Installation
+https://github.com/kubernetes/dashboard/wiki/Accessing-Dashboard---1.7.X-and-above
+
+# install dashboard on master node
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+# to use the dashboard locally on the same machine run kubectl proxy & and go to:
+http://127.0.0.1:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+
+# performance graphs
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/heapster/master/deploy/kube-config/rbac/heapster-rbac.yaml
+
+# change the .spec.type to NodePort and make sure all pods from kube-system are running fine
+KUBE_EDITOR="nano" kubectl -n kube-system edit service kubernetes-dashboard
+kubectl get pods --all-namespaces
+kubectl describe services kubernetes-dashboard --namespace=kube-system
+
+# optionaly you can use the proxy feature for access:
+kubectl proxy
+kubectl proxy --accept-hosts='^.\*$' --address='{your_server_ip}' &
+
+# check port for access on dashboard service, make sure it is NodePort
+kubectl get svc --all-namespaces
+
+# create your service account and give it access, get secret token for your new service name
+kubectl create serviceaccount SVC_NAME
+kubectl create rolebinding SVC_NAME-admin-default  --clusterrole=cluster-admin   --serviceaccount=default:SVC_NAME
+kubectl create clusterrolebinding serviceaccounts-cluster-admin-SVC_NAME --clusterrole=cluster-admin --group=system:serviceaccount:default:SVC_NAME
+kubectl describe secret SVC_NAME
+
+# optional rights:
+kubectl create clusterrolebinding BINDING_NAME   --clusterrole=cluster-admin   --serviceaccount=kube-system:default
+kubectl create rolebinding BINDING_NAME --clusterrole=cluster-admin --serviceaccount=kube-system:SVC_NAME
+
+# reset and remove kubernetes cluster
+kubeadm reset
+sudo apt-get purge kubeadm kubectl kubelet kubernetes-cni kube*
+sudo apt-get autoremove
+sudo rm -rf ~/.kube
+
+
+
+### KUBERNETES COMMANDS ###
+# create ANY resource with config files
+kubectl create -f RESOURCE_NAME.yaml (POD_NAME, SERVICE_NAME, DEPLOYMENT_NAME)
+
+# list all pods
+kubectl get pods
+kubectl get pods --all-namespaces
+kubectl get pod -l app=APP_LABEL
+kubectl get pod -l "app=APP_LABEL,secure=enabled"
+kubectl get pod --show-label
+kubectl describe pods POD_NAME -- get debug information about pods (checks status also during deployments)
+kubectl get pods -l key=value - check if selector is working with pods
+
+# apply labels changes to pods via yaml file
+kubectl apply -f POD_NAME.yaml
+
+# apply labes with command
+kubectl label pods secure-monolith "secure=enabled"
+
+# deploy and run containers
+kubectl run --image=nginx nginx-server --port=80 --env="DOMAIN=cluster"
+kubectl run nginx --image=nginx:1.10.0
+
+# expose pods
+kubectl expose deployments nginx --port 80 --type LoadBalancer
+kubectl expose deployment nginx-server --port=80 --name=nginx-http
+
+# pods logs
+kubectl logs POD_NAME
+kubectl --namespace kube-system logs kubernetes-pod
+kubectl logs -n kube-system kubernetes-pod
+kubectl describe pods
+
+# pods logs in real time
+kubectl logs -f POD_NAME
+
+# run shell on pod and connect to pods
+kubectl exec POD_NAME --stdin -tty -c POD_NAME /bin/sh
+
+# port forwarding for pods
+kubectl port-forward POD_NAME 10080:80
+
+# create kubernetes services like load balancers
+kubectl create -f LB_SERVICE_NAME.yaml
+
+# list kubernetes services
+kubectl get svc OR kubectl get services
+
+# apply deployments and check status, delete deployments or services
+kubectl apply -f DEPLOYMENT_NAME.yaml
+kubectl apply -f GREEN_DEPLOYMENT_NAME.yaml --record
+kubectl rollout status deployment DEPLOYMENT_NAME
+kubectl delete -f DEPLOYMENT_NAME.yaml
+
+# deployment history
+kubectl rollout history deployment DEPLOYMENT_NAME
+
+# describe deployments
+kubectl describe deployments DEPLOYMENT_NAME
+
+# create secrets
+kubectl create secret generic tls-certs --from-file=./tls
+kubectl describe secrets tls-certs
+
+# create configs
+kubectl create configmap nginx-proxy-conf --from-file ./nginx/proxy.conf
+kubectl describe configmap nginx-proxy-conf
+
+# list replica sets
+kubectl get replicasets
+
+# list deployments
+kubectl get deployment --namespace=kube-system
+
+# how to delete flannel adapters
+ip link delete cni0
+ip link delete flannel.1
+
+# end to end example for deploying a simple nginx service
+kubectl run hello-nginx --image=nginx --port=80
+kubectl get pods
+kubectl describe pod hello-nginx-5d47cdc4b7-wxf9b
+kubectl get deployments
+kubectl expose deployment hello-nginx --type=NodePort
+kubectl get services
+kubectl describe service hello-nginx
+kubectl scale --replicas=3 deployment/hello-nginx
+kubectl get deployment
+
+# other commands
+sudo systemctl restart kubelet
+kubectl create -f ./secret.json
+kubectl describe secret vturbuleasa
+kubectl delete secret service-account-token
+kubectl delete secret default-token-8m4ht
+kubectl get secrets
+kubectl describe secret default-token-r88dd
+kubectl -n kube-system get secret
+kubectl config set-credentials cluster-admin --token=bearer_token
+kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | awk '/^deployment-controller-token-/{print $1}') | awk '$1=="token:"{print $2}'
+kubectl get namespace
+
+# working with multiple clusters and contexts defined in ~/.kube/config:
+kubectl config use-context docker-for-desktop

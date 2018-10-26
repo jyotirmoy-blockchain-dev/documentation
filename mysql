@@ -1,0 +1,83 @@
+# MYSQL
+# create user and/or db
+CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON * . * TO 'newuser'@'localhost';
+FLUSH PRIVILEGES;
+CREATE database DB_NAME;
+show grants newuser;
+CREATE USER 'DB_USER'@'localhost' IDENTIFIED BY 'DB_PSW';
+CREATE DATABASE DB_NAME;
+CREATE DATABASE DB_NAME CHARACTER SET utf8 COLLATE utf8_bin;
+
+# grant rights on db and tables to specific users
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER,INDEX on <DB>.* TO '<USERNAME>'@'<SERVER_HOSTNAME>' IDENTIFIED BY '<PASSWORD>';
+GRANT ALL PRIVILEGES ON DB.* to 'DB_USER'@'%'' IDENTIFIED BY 'DB_PSW';
+GRANT ALL PRIVILEGES ON DB_NAME . * TO 'DB_USER'@'localhost';
+GRANT ALL PRIVILEGES ON DB TO 'DB_USER'@'localhost';
+FLUSH PRIVILEGES;
+
+# list users
+SELECT * FROM mysql.user;
+
+# allow remote access
+update bind statement in mysql configuration with external ip
+GRANT ALL PRIVILEGES ON DB_NAME . * TO 'newuser'@'%' with GRANT PRIVILEGES;
+'%' - for access from all ip addresses - could be replaced with just one ip
+
+# secure mysql database
+sudo mysql_secure_installation
+
+# backup and restore
+mysqldump -h DB_HOST -u DB_USER -p DB_PSW > DB_BKP_FILE.sql
+mysql -h DB_HOST -u DB_USER -p DB_PSW < DB_BKP_FILE.sql
+mysqldump -u <db_username> -h <db_host> -p db_name table_name > table_name.sql
+
+# master slave replication
+# add on master in /etc/my.cnf under mysql section:
+log-bin
+server_id=1
+replicate-do-db=REPLICATED_DB_NAME1
+replicate-do-db=REPLICATED_DB_NAME2
+bind-address=192.168.0.18
+gtid-domain-id=1
+# and after:
+systemctl restart mariadb
+mysql> SHOW MASTER STATUS\G;
+mysql> SELECT BINLOG_GTID_POS('mariadb-bin.000001', 510);
+mysql> CREATE USER 'replication_user'@'%' IDENTIFIED BY 'PSW';
+mysql> GRANT REPLICATION SLAVE ON *.* TO replication_user IDENTIFIED BY 'PSW' WITH GRANT OPTION;
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'replication_user'@'SOURCE_IP' IDENTIFIED BY 'PSW';  # REQUIRED TO ALLO REMOTE ACCESS ON MYSQL DB
+mysql> GRANT ALL PRIVILEGES ON REPLICATED_DB_NAME.* TO 'replication_user' WITH GRANT OPTION;
+mysql> FLUSH PRIVILEGES;
+mysql> FLUSH TABLES WITH READ LOCK;
+mysql> SHOW MASTER STATUS;
+mysql> EXIT;
+mysqldump -u root -p REPLICATED_DB_NAME > REPLICATED_DB_NAME.sql
+mysql> UNLOCK TABLES;
+mysql> EXIT;
+# on slave edit /etc/my.cnf:
+server_id=1
+replicate-do-db=REPLICATED_DB_NAME1
+replicate-do-db=REPLICATED_DB_NAME2
+systemctl restart mariadb
+mysql>  CHANGE MASTER TO
+        MASTER_HOST='10.110.10.38',
+        MASTER_USER='replication_user',
+        MASTER_PASSWORD='PSW',
+        MASTER_PORT=3306,
+        MASTER_LOG_FILE='mysqld-bin.000006',
+        MASTER_LOG_POS=1205,
+        MASTER_CONNECT_RETRY=10,
+        MASTER_USE_GTID=current_pos;
+mysql> START SLAVE;
+mysql> SHOW SLAVE STATUS\G;
+# in case of issues:
+mysql> STOP SLAVE;
+# fix errors and start slave again
+# example for invalid gtid:
+mysql> STOP SLAVE;
+mysql> SET GLOBAL gtid_slave_pos = '1-101-1';
+mysql> CHANGE MASTER TO master_use_gtid=slave_pos;
+mysql> START SLAVE;
+# reference 1: https://www.tecmint.com/mariadb-master-slave-replication-on-centos-rhel-debian/
+# reference 2: https://mariadb.com/resources/blog/mariadb-10-gtid-explained

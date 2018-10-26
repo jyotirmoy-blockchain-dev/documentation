@@ -1,0 +1,15 @@
+# gcloud shell commands examples
+
+gcloud version
+gcloud app deploy ./index.yaml ./app.yaml
+gcloud --help
+gcloud app browse
+gcloud app describe
+gcloud services list
+gcloud app services list
+gcloud app services delete default
+gcloud config set compute/zone europe-west1-b
+gcloud container clusters create k0
+gcloud compute zones list
+gcloud container clusters create k0 --zone europe-west1-b
+gcloud compute instances list

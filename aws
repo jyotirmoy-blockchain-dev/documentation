@@ -1,0 +1,77 @@
+### AWS S3 Commands Examples ###
+# aws s3 cppy example
+aws s3 cp s3://s3-bucket/dir . --recursive
+
+# aws s3 sync example
+aws s3 sync \\IP\nas\dir s3://BUCKET_NAME/dir
+
+# aws s3 streaming back archive
+aws s3 cp  s3://<bucket>/<key> - | \
+bzip -best | \
+aws s3 cp - s3://<bucket>/<key>.bz2
+
+
+
+### AWS EC2 Commands Examples ###
+# aws ec2 list instances by Tag/Name
+ec2 describe-instances --output text --profile aws_profile --region us-west-2 --query 'Reservations[*].Instances[*].Tags[?Key==`Name`].Value'
+
+# aws ec2 list instances that are running and have a specific AMI, many accounts and 6 regions
+while read line0; do
+while read line; do aws ec2 describe-instances --output table --query 'Reservations[*].Instances[*].[InstanceId, ImageId, State.Name]' --filter Name="image-id",Values="ami-a08deab6" Name='instance-state-name',Values='running' --profile "$line" --region "$line0"; done < my_aws_customers;
+done <stlx_regions
+
+# list instances based on AMI in a single account and region
+aws ec2 describe-instances --output table --query 'Reservations[*].Instances[*].[InstanceId, ImageId, State.Name]' --filter Name="image-id",Values="ami-a08deab6" Name='instance-state-name',Values='run*' --profile AWS_PROFILE --region us-east-1
+
+# list volumes larger than X
+aws ec2 describe-volumes --query 'Volumes[?Size > `1000`]' --output table --profile AWS_PROFILE
+
+# list volumes larger than X ordered by size:
+aws ec2 describe-volumes --query 'sort_by(Volumes[?Size > `500`], &Size)' --output table --profile AWS_PROFILE
+
+# bash script that uses waiters when creating an ec2 instance
+#!/bin/bash
+instance_id=$(aws ec2 run-instance --image-id ami-12345 --query 'Reservations[].Instances[].InstanceID' \
+              --output text)
+aws ec2 wait instance-running --instance-ids $instance_id
+
+# aws ec2 list instances that are running and that are created today
+while read line0; do while read line; do aws ec2 describe-instances --output table --query 'Reservations[*].Instances[*].[InstanceId, ImageId, State.Name, KeyName, Placement.AvailabilityZone, Platform, LaunchTime]' --filter Name='instance-state-name',Values='running' Name='launch-time',Values='2018-04-\*' --profile "$line0" --region "$line"; done < AWS_REGIONS; done < my_aws_customers > running_instances_list_10apr2018
+
+# Get ALB/ELB rules numbers
+aws elbv2 describe-rules --profile PROFILE --listener-arn LISTENER_ARN --query 'Rules[\*].[Priority, Conditions[\*].Values]'
+
+# resize aws root volume live
+growpart /dev/xvda 1 && resize2fs /dev/xvda1
+https://medium.com/@kenichishibata/resize-aws-ebs-4d6e2bf00feb
+
+
+
+### AWS IAM Commands Examples ###
+# list users from all accounts
+while read line; do aws iam list-users --output table --profile "$line"; done < my_aws_customers > all_iam_users_10apr2018
+
+# aws assume role
+aws sts assume-role --role-arn ROLE_ARN --role-session-name my_jenkins_session
+
+
+
+
+### AWS Cloud Formation Examples ###
+# using the "generate-cli-skeleton" parameter to create CF templates
+aws codepipeline create-pipeline --generate-cli-skeleton
+
+# cloud formation stack creation with parameter file
+aws cloudformation create-stack --stack-name STACK_NAME  --template-body file://cf_app_stack.json  --parameters file://parameters_app.json --profile AWS_PROFILE --capabilities CAPABILITY_IAM
+https://aws.amazon.com/blogs/devops/passing-parameters-to-cloudformation-stacks-with-the-aws-cli-and-powershell/
+
+
+### ECR/ECS Commands Examples ###
+# aws ECR/ECS
+aws ecr describe-repositories
+aws ecr describe-images --repository-name REPO_NAME
+docker pull AWS_ACC_ID.dkr.ecr.us-west-2.amazonaws.com/IMAGE_NAME:TAG
+
+### Cloudwatch Commands Examples ###
+aws cloudwatch put-metric-data --metric-name TestMetric --namespace TestNamespace --value 10 --dimensions 'Name=server,Value=tst' --region eu-central-1 --profile AWS_PROFILE
