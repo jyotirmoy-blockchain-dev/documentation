@@ -11,3 +11,90 @@ apt install software-properties-common
 apt-add-repository ppa:ansible/ansible
 apt update
 apt install ansible -y
+
+# create role
+ansible-galaxy init test-role-1
+
+### ANSIBLE CMDB
+# First step is to create an Ansible inventory,
+# this part is quite simple because we just need to write a host listing (one per line).
+# Groups are not necessary for the inventory.
+vim hosts
+pa2-app01
+pa2-app02
+pa2-app03
+pa2-mysql01
+[...]
+
+# Ansible setup module is often used to debug because it shows all host information.
+# When fact caching is enabled or using “tree” option in CLI facts are saved on disk.
+# Execute the following command to collect information about all servers listed
+# in “hosts” file and save it to “out” directory.
+ansible -i hosts -m setup --tree out/ all
+
+# Directory “out” is now created and contains a file for each server of your inventory.
+$ ls out/
+pa2-app01 pa2-app02 pa2-app03 pa2-mysql01 pa2-mysql02 pa2-redis01
+[...]
+
+# Now we need to install ansible-cmdb, we are using python installer.
+pip install ansible-cmdb
+
+# Then we use ansible-cmdb to generate inventory by
+# specifying host facts directory:
+ansible-cmdb -t html_fancy_split -p local_js=1 out/
+open cmdb/index.html
+
+# By default all information (server list and all server information)
+# is displayed on the same page, rendering could be a bit
+# slow with lots of servers and columns.
+
+# Option “-t html_fancy_split” specifies a built-in template where server
+# information is separated in several files
+# and “-p local_js=1” store javascript in HTML (helpful for offline use).
+
+# It’s also possible to export host inventory to other formats like CSV or SQL.
+ansible-cmdb -t csv out > overview.csv
+
+# Because ansible-cmd use Ansible facts, it is possible to extend inventory
+# to devices that Ansible can’t fetch like network devices or
+# storage systems by adding facts manually.
+mkdir out_manual
+# We must declare each device with the
+# minimal Ansible host fact structure:
+vim out_manual/pa2-fw01
+{
+  "groups": [
+  ],
+  "ansible_facts": {
+    "ansible_default_ipv4": {
+      "address": "172.16.1.1"
+    },
+    "ansible_all_ipv4_addresses": [
+      "172.16.1.1",
+      "172.16.2.1"
+    ],
+    "ansible_interfaces": [
+        "port1",
+        "port2"
+    ],
+    "ansible_hostname": "pa2-fw01",
+    "ansible_nodename": "pa2-fw01",
+    "ansible_system_vendor": "Fortinet",
+    "ansible_distribution": "Fortigate",
+    "ansible_distribution_version": "100D",
+
+    "ansible_product_serial": "FGT-602803031004",
+    "ansible_memtotal_mb": 4096,
+    "ansible_processor_cores": 1
+  },
+  "changed": false
+}
+
+# Then we regenerate host inventory including manual facts directory:
+ansible-cmdb -t html_fancy_split out/ out_manual/
+open cmdb/index.html
+
+# Pro tips: If you already use Ansible to manage your infrastructure,
+# you could just enable fact caching on Ansible server and execute ansible-cmd
+# in a CRON job to keep your inventory up-to-date :)

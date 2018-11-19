@@ -1,0 +1,20 @@
+### authenticate and run simple command
+mongo -u admin -p --authenticationDatabase admin
+mongo -u admin -p --eval  "printjson(db.adminCommand( { listDatabases: 1 } ))" --authenticationDatabase admin
+
+### create user
+db.createUser(
+  {
+    user: "myUserAdmin",
+    pwd: "abc123",
+    roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+  }
+)
+
+### backup database command
+/usr/bin/mongodump --username root --password "PASSWORD" --authenticationDatabase admin --db DB_NAME --gzip --out ./test_bkp
+
+### print commands via help
+mongo -u admin -p --eval  "db.help()" --authenticationDatabase admin
+OR
+mongo --eval  "db.help()"

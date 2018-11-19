@@ -72,11 +72,22 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 sudo nano /etc/sysctl.conf
 sudo sysctl -p
 hash -r # reset bash cache
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no USER@HOST # no host key verification    check for ssh
 
 # get your public ip address
 dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'"' '{ print $2}'
 
+# use artillery tool to test HTTP/HTTPS web servers
+- https://artilerry.io - load testing tool with cmd like: artillery quick --duration 120 --rate 20  https://myurl
 
+# use stress to create CPU load
+sudo stress --cpu 8 --timeout 20
+
+# zip only folder content
+cd folder; zip -r ../zipped_dir.zip *
+
+# renew specific certificates with certbot from /etc/letsencrypt/live/
+certbot renew --cert-name domain.com
 
 ### OPENSSL ###
 openssl enc -nosalt -aes-256-cbc -k hello-aes -P

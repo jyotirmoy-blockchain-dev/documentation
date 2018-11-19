@@ -27,3 +27,9 @@ rm -rf .git/modules/repo
 git rm --cached repo --force
 git ls-files --stage | grep 160000
 git logs
+
+# git tags
+git tag -a dev-1.0.14 -m "dev-1.0.14"
+git push --tags
+git tag --delete dev-1.0.14 - delete locally
+git push origin --delete dev-v1.0.13 - delete remote

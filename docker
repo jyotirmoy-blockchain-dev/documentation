@@ -64,6 +64,12 @@ docker rmi $(docker images -a -q) --force
 docker system prune -a
 reference: https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes
 
+# purge/remove all images and all stopped containers
+docker rmi $(docker images -a -q) --force && docker rm $(docker ps -a -q)
+
+# remove untagged images
+docker rmi $(docker images | grep "^<none>" | awk "{print $3}")
+
 # keep container running - one example from cloud formation command section:
 - "/bin/sh -c \"while true; do aws s3 sync ./build s3://S3_BUCKET_NAME/test --delete; aws s3 cp ./build s3://S3S3_BUCKET_NAME/test_backup/${BUILD_TAG} --recursive; sleep 1; done\""
 

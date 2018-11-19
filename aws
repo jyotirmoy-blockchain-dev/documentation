@@ -46,6 +46,9 @@ aws elbv2 describe-rules --profile PROFILE --listener-arn LISTENER_ARN --query '
 growpart /dev/xvda 1 && resize2fs /dev/xvda1
 https://medium.com/@kenichishibata/resize-aws-ebs-4d6e2bf00feb
 
+# create s3 bucket folder
+aws s3api put-object --bucket some-bucket --key some/nested/folder/you/want/to/create
+
 
 
 ### AWS IAM Commands Examples ###
@@ -75,3 +78,12 @@ docker pull AWS_ACC_ID.dkr.ecr.us-west-2.amazonaws.com/IMAGE_NAME:TAG
 
 ### Cloudwatch Commands Examples ###
 aws cloudwatch put-metric-data --metric-name TestMetric --namespace TestNamespace --value 10 --dimensions 'Name=server,Value=tst' --region eu-central-1 --profile AWS_PROFILE
+
+### Get secret keys and key id for attached iam role ###
+curl http://169.254.169.254/latest/meta-data/iam/security-credentials/AttachedIAMRole
+
+### Cloud formation conditioning example with And ###
+Conditions:
+    CreateSecondFQDNRule: !And
+      - !Not [ !Equals [!Ref ApplicationFQDN2, 'NA']]
+      - !Not [ !Equals [!Ref Priority2, '']]
