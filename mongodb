@@ -11,10 +11,37 @@ db.createUser(
   }
 )
 
-### backup database command
+### backup database
 /usr/bin/mongodump --username root --password "PASSWORD" --authenticationDatabase admin --db DB_NAME --gzip --out ./test_bkp
+
+### restore database
+mongorestore root/db_backups/formdata-dev/ --db formdata-dev --gzip -u root -p PASSWORD  --authenticationDatabase admin
+OR
+/usr/bin/mongorestore  --username root --password "PASSWORD" --authenticationDatabase admin  --db DB_NAME --archive=test.20150715.archive
+
+### restore collections
+mongorestore -d devdb -c vehicles devdb/devdb/vehicles.bson
+
+### mongo import
+mongoimport --db devdb --collection vehicles --file vehicles.json --jsonArray
 
 ### print commands via help
 mongo -u admin -p --eval  "db.help()" --authenticationDatabase admin
 OR
 mongo --eval  "db.help()"
+
+### various other commands
+# See all your databases:
+show dbs
+
+# Select the database
+use your_database_name
+
+# Show the collections
+show collections
+This will list all the collections in your selected database.
+
+# See all the data
+db.collection_name.find()
+or
+db.collection_name.find().pretty()

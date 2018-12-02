@@ -1,4 +1,4 @@
-### MINIKUBE ###
+### MINIKUBE on macosx ###
 # start minikube
 minikube start --vm-driver=virtualbox
 
@@ -31,32 +31,31 @@ docker system prune -af --volumes
 
 
 ### KUBERNETES CLUSTER INSTALL ###
-# install and enable docker-ce  - check documentation
-sudo swapoff -a # and disable swap in /etc/fstab
+
+# install docker-ce
+apt-get update && apt-get upgrade -y && apt-get install docker-ce
+# disable swap (comment it in in /etc/fstab too)
+sudo swapoff -a
+
+# add kubernetes repo and install kubernetes tools
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
 sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 sudo apt update
 sudo apt install -y kubeadm kubectl
-sudo kubeadm init --pod-network-cidr=SUBNET_CIDR
-# optionally use parameter: --apiserver-advertise-address=API_SERVER_IP
+kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=SystemVerification --apiserver-advertise-address=192.168.1.101
 
-Your Kubernetes master has initialized successfully!
 
-# To start using your cluster, you need to run the following as a regular user:
+# run as regular user the following commands
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-# deploy flanel or calico
+# deploy flanel, calico or another network for pods
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 kubectl apply -f https://docs.projectcalico.org/v3.2/getting-started/kubernetes/installation/hosted/calico.yaml
+# ATTENTION - as of now there are issues if you disable IPV6 with flannel - let IPV6 ACTIVE
 
-
-# deploy a pod network to the cluster.
-Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
-  https://kubernetes.io/docs/concepts/cluster-administration/addons/
-
-# join new cluster nodes
+# join cluster nodes if multi node cluster
 kubeadm join MASTER_NODE_IP:6443 --token TOKEN --discovery-token-ca-cert-hash sha256:HASH
 
 # get kubernetes cluster information
@@ -66,29 +65,84 @@ kubectl version
 kubectl get nodes
 kubectl describe node <node>
 
-# dashboard install, list service and full access
+# dashboard install
+# secure login and https:
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+# unsecure and with http:
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/alternative/kubernetes-dashboard.yaml
+
+# IMPORTANT
+# most unsecure option is if you use alternative setup with option 1. bellow and full admin rights for dashboard
+
+# dashboard reference:
 https://github.com/kubernetes/dashboard/wiki/Installation
 https://github.com/kubernetes/dashboard/wiki/Accessing-Dashboard---1.7.X-and-above
+https://stackoverflow.com/questions/46664104/how-to-sign-in-kubernetes-dashboard
 
-# install dashboard on master node
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-# to use the dashboard locally on the same machine run kubectl proxy & and go to:
-http://127.0.0.1:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
-
-# performance graphs
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/heapster/master/deploy/kube-config/rbac/heapster-rbac.yaml
-
-# change the .spec.type to NodePort and make sure all pods from kube-system are running fine
+# to access dashboard directly there are a few options:
+# 1. use NodePort and give full access to dashboard service
+sessionAffinity: None
+  type: ClusterIP
+# TO
+ sessionAffinity: None
+   type: NodePort
+# and if port 80 is busy, replace port 80 with another port
 KUBE_EDITOR="nano" kubectl -n kube-system edit service kubernetes-dashboard
-kubectl get pods --all-namespaces
-kubectl describe services kubernetes-dashboard --namespace=kube-system
+# confirm the port
+kubectl -n kube-system get service kubernetes-dashboard
+# check kubernetes-dashboard-rolebinding-full.yaml from cosorg repo
 
-# optionaly you can use the proxy feature for access:
-kubectl proxy
+
+# 2. optionaly you can use the proxy feature for access:
 kubectl proxy --accept-hosts='^.\*$' --address='{your_server_ip}' &
-
 # check port for access on dashboard service, make sure it is NodePort
-kubectl get svc --all-namespaces
+
+# 3. deploy metallb for on prem baremetal servers
+kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.7.3/manifests/metallb.yaml
+
+# 4. use Nginx Ingress Controller (used for HTTP/HTTPS load balancing kubernetes, especially bare metal but not only)
+#reference:
+https://akomljen.com/kubernetes-nginx-ingress-controller/
+
+# check also oath2_proxy and OIDC_DEX
+https://blog.heptio.com/on-securing-the-kubernetes-dashboard-16b09b1b7aca
+https://thenewstack.io/kubernetes-single-sign-one-less-identity/
+
+# IMPORTANT
+# normally running workloads on master node is not allowed an therefore you can have issues
+# during metallb deployment. to unlock running any jobs on master run
+kubectl taint nodes --all node-role.kubernetes.io/master-
+# and confirm that taint was removed by running
+kubectl describe nodes node1 | grep -i taint
+# reference for tainting:
+https://cloud.google.com/kubernetes-engine/docs/how-to/node-taints
+https://itnext.io/understanding-kubectl-taint-e6f299d3851f
+
+# IMPORTANT
+# to increase the time for the token use
+KUBE_EDITOR="nano" kubectl -n kube-system edit deployment kubernetes-dashboard
+# and add ttl time
+spec:
+  containers:
+  - args:
+    - --auto-generate-certificates
+# TO
+spec:
+  containers:
+  - args:
+    - --auto-generate-certificates
+    - --token-ttl=36000
+# reference for dashboard args:
+https://github.com/kubernetes/dashboard/wiki/Dashboard-arguments
+
+# IMPORTANT
+# certificates for dashboard can be updated by creating new ones with
+sudo certbot certonly --dns-route53 -d *.domain.net (if route53 is used)
+# deleting the dashboard certificates secret and running
+kubectl create secret generic kubernetes-dashboard-certs --from-file=certificates/ -n kube-system
+# references, recomended setup:
+https://github.com/kubernetes/dashboard/wiki/Installation
+
 
 # create your service account and give it access, get secret token for your new service name
 kubectl create serviceaccount SVC_NAME
@@ -120,6 +174,7 @@ kubectl get pod -l "app=APP_LABEL,secure=enabled"
 kubectl get pod --show-label
 kubectl describe pods POD_NAME -- get debug information about pods (checks status also during deployments)
 kubectl get pods -l key=value - check if selector is working with pods
+kubectl get svc --all-namespaces
 
 # apply labels changes to pods via yaml file
 kubectl apply -f POD_NAME.yaml

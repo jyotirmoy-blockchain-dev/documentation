@@ -1,9 +1,9 @@
-# https setup
+# certbot certificates with certbot
 add-apt-repository ppa:certbot/certbot
 apt install python-certbot-nginx
 pip3 install certbot-dns-route53
 certbot --version
-certbot certonly --dns-route53 -d domain.com -d *.domain.com   (wait a few minutes and the result will be:
+certbot certonly --dns-route53 -d *.domain.com   (wait a few minutes and the result will be:
 IMPORTANT NOTES:
  - Congratulations! Your certificate and chain have been saved at:
    /etc/letsencrypt/live/domain.com/fullchain.pem
@@ -13,6 +13,11 @@ IMPORTANT NOTES:
    version of this certificate in the future, simply run certbot
    again. To non-interactively renew *all* of your certificates, run
    "certbot renew"
+
+# wildcard certificates with certbot via let's encrypt
+./certbot-auto --server https://acme-v02.api.letsencrypt.org/directory 370 -d *.domain.net --manual --preferred-challenges dns-01 certonly
+
+# script to update route53
 systemctl restart nginx
 add to crontab: 0 0 * * * rm /root/update-route53.ip && /root/update_dns.sh domain.com
 
@@ -35,6 +40,7 @@ server {
 }
 
 # hardening nginx
+# nginx https configuration
 # add to site config:
 ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
 ssl_ciphers "EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA HIGH !RC4 !aNULL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS";

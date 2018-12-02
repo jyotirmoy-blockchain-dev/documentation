@@ -49,6 +49,9 @@ https://medium.com/@kenichishibata/resize-aws-ebs-4d6e2bf00feb
 # create s3 bucket folder
 aws s3api put-object --bucket some-bucket --key some/nested/folder/you/want/to/create
 
+# aws services ip ranges or ip addresses
+curl https://ip-ranges.amazonaws.com/ip-ranges.json
+curl https://ip-ranges.amazonaws.com/ip-ranges.json | jq -r ‘.prefixes[] | select(.service==“ROUTE53_HEALTHCHECKS”) | .ip_prefix’
 
 
 ### AWS IAM Commands Examples ###

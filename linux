@@ -3,6 +3,7 @@ sudo lshw -C memory                 # memory info
 stat -c '%A %a %n' /etc/passwd      # binary file permissions
 curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'    # find external IP
 curl ipinfo.io/ip                                                                 # find external IP
+
 curl -u USERNAME http://IP && curl -k https://IP                                  # curl commands
 find. -name *.png -type f -print | xargs tar -cvzf images.tar.gz                  # arhiving with xarg
 cat urls.txt | xargs wget                                                         # xarg with wget
@@ -96,8 +97,27 @@ openssl enc -nosalt -aes-256-cbc -k aes-secret -P -pass pass:'start1234%'
 openssl enc -nosalt -aes-256-cbc -in wildcard_blockworks_ch.crt -out wildcard_certificate.crt.enc -base64 -K AFF3BE84428376CA59E601A916A9F8B620B8F7C71696E7001441B77D5D9B9 -iv C611C73D0F0EA0A5A5097EE4E3E9A
 openssl enc -nosalt -aes-256-cbc -d -in wildcard_certificate.crt.enc -base64 -K AFF3BE84428346876CA59E6016A9F8B620B8F7C71696E7001441B77D5D9B9 -iv C611C73D0F9A60E5A5097EE4E3E9A
 
+### create self signed OPENSSL certificates ####
+openssl req -new \
+           -config etc/client.conf \
+           -out certs/my_cert.csr \
+           -keyout certs/my_key.key
+AND
+openssl ca \
+       -config etc/signing-ca.conf \
+       -in certs/my_cert.csr \
+       -out certs/my_cert.crt \
+       -extensions client_ext
+OR
+openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /etc/keystore/server.key -out /etc/keystore/server.crt
 
-
+### apt OPERATIONS
+# base packages installations
+apt-get install -y ruby vim python-pip apt-transport-https openvpn nano ftp htop joe sudo openvpn git curl g++ \
+make gnupg gnupg2 gnupg1 zip apt-transport-https ca-certificates telnet stress whois nfs-common \
+software-properties-common dirmngr jq net-tools unzip zip wget gcc g++ tree mc netbase
+apt-cache search nano
+apt search nano
 
 ### FILE OPERATIONS ###
 # remove file from all folders recursively, first check than delete (attention: if you put -delete before - it will delete everything!!!)

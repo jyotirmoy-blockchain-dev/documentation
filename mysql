@@ -33,6 +33,19 @@ mysqldump -h DB_HOST -u DB_USER -p DB_PSW > DB_BKP_FILE.sql
 mysql -h DB_HOST -u DB_USER -p DB_PSW < DB_BKP_FILE.sql
 mysqldump -u <db_username> -h <db_host> -p db_name table_name > table_name.sql
 
+# restore single db
+mysql -p -u[user] [database] < db_backup.dump
+
+# restore multiple dbs
+mysql -p -u[user] < db_backup.dump
+
+# restore db from mysql
+mysql -u root -p
+create database mydb;
+use mydb;
+source db_backup.dump;
+
+
 # master slave replication
 # add on master in /etc/my.cnf under mysql section:
 log-bin

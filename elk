@@ -1,0 +1,172 @@
+1. install mandatory software and add es repository
+
+sudo apt-get update
+sudo apt-get install -y python-software-properties software-properties-common apt-transport-https python-pip openjdk-8-jre-headless nginx apache2-utils htop nano
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/oss-6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
+
+2.install es software: elasticsearch open source version, kibana open source version, logstash,
+filebeat, metricbeat es curator and elastalert
+sudo apt-get update
+sudo apt-get install -y elasticsearch-oss kibana-oss logstash filebeat metricbeat
+pip install "elasticsearch>=5.0.0" "setuptools>=11.3" elastalert elasticsearch-curator
+
+3. generate certificates for logstash and/or nginx (for NGXIN recommended to use certbot+letsencrypt)
+### create self signed OPENSSL certificates ####
+openssl req -new \
+           -config etc/client.conf \
+           -out certs/my_cert.csr \
+           -keyout certs/my_key.key
+AND
+openssl ca \
+       -config etc/signing-ca.conf \
+       -in certs/my_cert.csr \
+       -out certs/my_cert.crt \
+       -extensions client_ext
+OR
+openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /etc/keystore/server.key -out /etc/keystore/server.crt
+
+4. install required logstash plugins and elasticsearch plugins
+/usr/share/logstash/bin/logstash-plugin install logstash-filter-multiline logstash-input-gelf logstash-input-file
+export ES_PATH_CONF=/etc/elasticsearch
+/usr/share/elasticsearch/bin/elasticsearch-plugin install ingest-geoip --batch --silent
+list es plugins: ls -lah /usr/share/elasticsearch/plugins/
+
+5. copy config files for elasticsearch-oss kibana-oss logstash filebeat metricbeat elastalert and restart all services
+
+6. initialize indexes in kibana via management option (left menu)
+
+7. initialize kibana dashboards:
+metricbeat setup --dashboards
+
+8. enable "fielddata": true to correct dashboards
+
+PUT metricbeat-2018.11.26/_mapping/doc
+{
+   "doc": {
+      "properties": {
+        "system.network.name": {
+          "type": "text",
+          "fielddata": true
+        }
+      }
+   }
+}
+
+PUT metricbeat-2018.11.26/_mapping/doc
+{
+   "doc": {
+      "properties": {
+        "system.filesystem.mount_point": {
+          "type": "text",
+          "fielddata": true
+        }
+      }
+   }
+}
+
+PUT metricbeat-2018.11.26/_mapping/doc
+{
+   "doc": {
+      "properties": {
+        "system.process.name": {
+          "type": "text",
+          "fielddata": true
+        }
+      }
+   }
+}
+
+PUT metricbeat-2018.11.26/_mapping/doc
+{
+   "doc": {
+      "properties": {
+        "beat.name": {
+          "type": "text",
+          "fielddata": true
+        }
+      }
+   }
+}
+
+9. configure and correct elastalert and curator
+
+10. configure cerebro and start it in the background
+wget https://github.com/lmenezes/cerebro/releases/download/v0.8.1/cerebro-0.8.1.tgz && tar -xvzf cerebro-0.8.1.tgz && chmod +x cerebro-0.8.1/bin/cerebro
+/opt/cerebro-0.8.1/bin/cerebro &
+
+11. filbeat log parsing examples
+https://www.elastic.co/guide/en/logstash/current/logstash-config-for-filebeat-modules.html
+https://www.elastic.co/guide/en/logstash/current/config-examples.html
+
+12. other informations
+- before elasticsearch restart disable sharding to avoid re-allocation
+- elasticsearch and ASG on AWS should be avoided
+- shards re-allocation is CPU intensive
+
+- check indexes:
+curl localhost:9200/_cat/indices | sort | grep red
+curl localhost:9200/_cluster/health?pretty
+
+- check cluster status:
+curl -XGET 'http://localhost:9200/_nodes?os=true&process=true&pretty=true'
+
+- if indexes will remain red for a long time they are corrupted and can not be recovered.
+  remove corrupted indexes with:
+curl -XDELETE 'localhost:9200/logstash-2017.12.18?pretty'
+
+- force index removal by stoping the indexer service and using a different timeout:
+curl -XDELETE localhost:9200/logstash-2017.12.18?master_timeout=5m
+curl -XDELETE http://localhost:9200/logstash-2017.12.20
+rm -rf /u01/elasticsearch/data/elasticsearch/nodes/0/indices/logstash-2017.12.20
+
+- remove nodes from elk cluster:
+run this command and wait that the shards are all allocated to the other nodes,
+stop services, wait one day and terminate the instance:
+
+curl -XPUT localhost:9200/_cluster/settings -H 'Content-Type: application/json' -d '{
+  "transient" :{
+      "cluster.routing.allocation.exclude._ip" : "10.56.166.43"
+   }
+}';echo
+
+- stop shards re-allocation:
+curl -XPUT 'http://localhost:9200/_cluster/settings' -d '{  "transient" : {  "cluster.routing.allocation.disable_allocation": "false"  }}'
+curl -XPUT 'http://localhost:9200/_cluster/settings' -d '{  "transient" : {  "cluster.routing.allocation.enable": "true"  }}'
+
+
+- curator indexes cleanup:
+/usr/local/bin/curator delete indices --older-than 18 --time-unit days --timestring "%Y.%m.%d" --prefix 'logstash-'
+# Removes indices olver than X days (where X is 18 here).
+
+- elasticsearch is never stopping kibana index initalization:
+curl -XDELETE http://localhost:9200/.kibana
+service nginx restart
+
+- shards re-allocation is working but ingestion not, due to corrupt indexes:
+check for red indexes that are corrupt and remove them from each node with
+curl -XDELETE http://localhost:9200/chef-2017.12.20
+and
+rm -rf /u01/elasticsearch/data/elasticsearch/nodes/0/indices/logstash-2017.12.20
+stop shard allocation, restart elasticsearch and start again elastisearch and shard allocation
+
+- too many open files error:
+increase the ulimit (open files limit) and restart instance
+Caused by: [logstash-2017.10.22][[logstash-2017.10.22][3]] RecoveryEngineException[Phase[1] phase1 failed];
+          nested: RecoverFilesRecoveryException[Failed to transfer [0] files with total size of [0b]]; nested:
+          NotSerializableExceptionWrapper[file_system_exception:
+          /u01/elasticsearch/data/elasticsearch/nodes/0/indices/logstash-2017.10.22/3/index/_5p0.si: Too many
+          open files];
+nano /etc/security/limits.conf
+and add:
+    elasticsearch soft  nofile 20000
+    elasticsearch hard  nofile 65000
+    root soft  nofile 20000
+    root hard  nofile 65000
+    cat /etc/security/limits.conf
+reboot
+
+- last resort measure like forced restart:
+stop all es, logstash and kibana services, kill all java processes with
+ kill -9 $(ps aux | grep java | grep -v 'grep' | awk '{print $2}')
+and wait ~ 1 minute, start es, logstash and kibana again
