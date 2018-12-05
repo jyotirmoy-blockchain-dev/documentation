@@ -27,7 +27,7 @@ OR
 openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /etc/keystore/server.key -out /etc/keystore/server.crt
 
 4. install required logstash plugins and elasticsearch plugins
-/usr/share/logstash/bin/logstash-plugin install logstash-filter-multiline logstash-input-gelf logstash-input-file
+/usr/share/logstash/bin/logstash-plugin install logstash-filter-multiline logstash-input-gelf logstash-input-file logstash-filter-json_encode
 export ES_PATH_CONF=/etc/elasticsearch
 /usr/share/elasticsearch/bin/elasticsearch-plugin install ingest-geoip --batch --silent
 list es plugins: ls -lah /usr/share/elasticsearch/plugins/
