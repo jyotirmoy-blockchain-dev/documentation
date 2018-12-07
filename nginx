@@ -243,3 +243,10 @@ server {
        return 405;
      }
 }
+
+# file upload size
+http {
+	#...
+        client_max_body_size 100m;
+	#...
+}

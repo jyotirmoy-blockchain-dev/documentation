@@ -108,7 +108,7 @@ https://akomljen.com/kubernetes-nginx-ingress-controller/
 https://blog.heptio.com/on-securing-the-kubernetes-dashboard-16b09b1b7aca
 https://thenewstack.io/kubernetes-single-sign-one-less-identity/
 
-# IMPORTANT
+# IMPORTANT - tainting nodes
 # normally running workloads on master node is not allowed an therefore you can have issues
 # during metallb deployment. to unlock running any jobs on master run
 kubectl taint nodes --all node-role.kubernetes.io/master-
@@ -118,7 +118,7 @@ kubectl describe nodes node1 | grep -i taint
 https://cloud.google.com/kubernetes-engine/docs/how-to/node-taints
 https://itnext.io/understanding-kubectl-taint-e6f299d3851f
 
-# IMPORTANT
+# IMPORTANT - dashboard tokens ttl
 # to increase the time for the token use
 KUBE_EDITOR="nano" kubectl -n kube-system edit deployment kubernetes-dashboard
 # and add ttl time
@@ -163,10 +163,12 @@ sudo rm -rf ~/.kube
 
 
 ### KUBERNETES COMMANDS ###
-# create ANY resource with config files
+
+# create ANY resource with YAML files
 kubectl create -f RESOURCE_NAME.yaml (POD_NAME, SERVICE_NAME, DEPLOYMENT_NAME)
 
-# list all pods
+
+# pods
 kubectl get pods
 kubectl get pods --all-namespaces
 kubectl get pod -l app=APP_LABEL
@@ -175,71 +177,68 @@ kubectl get pod --show-label
 kubectl describe pods POD_NAME -- get debug information about pods (checks status also during deployments)
 kubectl get pods -l key=value - check if selector is working with pods
 kubectl get svc --all-namespaces
-
-# apply labels changes to pods via yaml file
 kubectl apply -f POD_NAME.yaml
-
-# apply labes with command
 kubectl label pods secure-monolith "secure=enabled"
-
-# deploy and run containers
-kubectl run --image=nginx nginx-server --port=80 --env="DOMAIN=cluster"
-kubectl run nginx --image=nginx:1.10.0
-
 # expose pods
 kubectl expose deployments nginx --port 80 --type LoadBalancer
 kubectl expose deployment nginx-server --port=80 --name=nginx-http
-
+# port forwarding for pods
+kubectl port-forward POD_NAME 10080:80
 # pods logs
 kubectl logs POD_NAME
 kubectl --namespace kube-system logs kubernetes-pod
 kubectl logs -n kube-system kubernetes-pod
-kubectl describe pods
-
 # pods logs in real time
 kubectl logs -f POD_NAME
-
 # run shell on pod and connect to pods
 kubectl exec POD_NAME --stdin -tty -c POD_NAME /bin/sh
+# deploy and run containers
+kubectl run --image=nginx nginx-server --port=80 --env="DOMAIN=cluster"
+kubectl run nginx --image=nginx:1.10.0
 
-# port forwarding for pods
-kubectl port-forward POD_NAME 10080:80
 
-# create kubernetes services like load balancers
+# services
 kubectl create -f LB_SERVICE_NAME.yaml
-
 # list kubernetes services
 kubectl get svc OR kubectl get services
 
-# apply deployments and check status, delete deployments or services
+
+# deployments
 kubectl apply -f DEPLOYMENT_NAME.yaml
 kubectl apply -f GREEN_DEPLOYMENT_NAME.yaml --record
 kubectl rollout status deployment DEPLOYMENT_NAME
 kubectl delete -f DEPLOYMENT_NAME.yaml
-
 # deployment history
 kubectl rollout history deployment DEPLOYMENT_NAME
-
-# describe deployments
+# list/describe deployments
+kubectl get deployment --namespace=kube-system
 kubectl describe deployments DEPLOYMENT_NAME
+# work with deployment env variables
+kubectl set env deployment/registry STORAGE_DIR=/local
+reference: https://www.mankier.com/1/kubectl-set-env
 
-# create secrets
+
+# secrets
 kubectl create secret generic tls-certs --from-file=./tls
 kubectl describe secrets tls-certs
+kubectl create -f ./secret.json
+kubectl describe secret vturbuleasa
+kubectl delete secret service-account-token
+kubectl delete secret default-token-8m4ht
+kubectl get secrets
+kubectl describe secret default-token-r88dd
+kubectl -n kube-system get secret
+kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | awk '/^deployment-controller-token-/{print $1}') | awk '$1=="token:"{print $2}'
 
-# create configs
+
+# configmaps
 kubectl create configmap nginx-proxy-conf --from-file ./nginx/proxy.conf
 kubectl describe configmap nginx-proxy-conf
+
 
 # list replica sets
 kubectl get replicasets
 
-# list deployments
-kubectl get deployment --namespace=kube-system
-
-# how to delete flannel adapters
-ip link delete cni0
-ip link delete flannel.1
 
 # end to end example for deploying a simple nginx service
 kubectl run hello-nginx --image=nginx --port=80
@@ -252,18 +251,17 @@ kubectl describe service hello-nginx
 kubectl scale --replicas=3 deployment/hello-nginx
 kubectl get deployment
 
+
 # other commands
 sudo systemctl restart kubelet
-kubectl create -f ./secret.json
-kubectl describe secret vturbuleasa
-kubectl delete secret service-account-token
-kubectl delete secret default-token-8m4ht
-kubectl get secrets
-kubectl describe secret default-token-r88dd
-kubectl -n kube-system get secret
-kubectl config set-credentials cluster-admin --token=bearer_token
-kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | awk '/^deployment-controller-token-/{print $1}') | awk '$1=="token:"{print $2}'
 kubectl get namespace
+kubectl config set-credentials cluster-admin --token=bearer_token
+
 
 # working with multiple clusters and contexts defined in ~/.kube/config:
 kubectl config use-context docker-for-desktop
+
+
+# how to delete flannel adapters
+ip link delete cni0
+ip link delete flannel.1
