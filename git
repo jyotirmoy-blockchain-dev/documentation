@@ -33,3 +33,7 @@ git tag -a dev-1.0.14 -m "dev-1.0.14"
 git push --tags
 git tag --delete dev-1.0.14 - delete locally
 git push origin --delete dev-v1.0.13 - delete remote
+
+# removing files from git history and from entire repo
+use git filter-branch or the bfg cleanup tool
+reference: https://help.github.com/articles/removing-sensitive-data-from-a-repository/

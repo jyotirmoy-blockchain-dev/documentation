@@ -1,0 +1,39 @@
+1.
+install xcode, jdk, ruby
+
+2.
+install homebrew:
+https://github.com/Homebrew/brew/blob/master/docs/Installation.md or ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+3. install tools with brew
+brew install git zsh zsh-complitions git-crypt tree vagrant mc ruby rbenv ruby-build iterm python3-pip bind node kubernetes-cli joe nano telnet wget chksum mysql-client jq minio/stable/mc redis gnupg
+
+3.
+install oh my zsh and configure it with:  sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+
+4.
+install chef-dk, check: https://downloads.chef.io/chefdk
+
+5.
+install and register Rubymine or Atom as IDE - https://www.jetbrains.com/ruby/
+
+6.
+setup your ~/cookbooks folder and ask for chef and bitbucket(git) access. Generate your ssh key first.
+cd ~
+ssh-keygen -t rsa
+cat ~/.ssh/id_rsa.pub | pbcopy      --this will copy the key to the clipboard https://bitbucket.org/account/user/USERNAME/ssh-keys/
+
+7.
+install the required ruby chef gems via:
+chef gem install knife-block aws-sdk chef-provisioning-aws knife-ec2 net-ssh-multi knife-windows knife-essentials berkshelf pry awscli parseconfig nokogiri fog fog-aws rest mixlib-shelout rubocop bundler rest-client aws-sdk parseconfig logging mixlib-shellout
+
+8.
+test your configuration with cmds like   knife block list   and    knife ec2 server list
+
+9. add user to vboxsf shared folder if VBOX is used:
+sudo gpasswd -a your-user-name vboxsf
+
+10. install IDE/text editor on debian
+wget https://github.com/atom/atom/releases/download/v1.21.1/atom-amd64.deb
+dpkg -i atom-amd64.deb
+install additional plugins: language-chef, language-habitat, language-inspec, language-rspec, linter, linter-foodcritic, linter-rubocop

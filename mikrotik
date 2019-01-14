@@ -1,0 +1,3 @@
+# speed issues on Gigabit network (only 400/100 Mbps)
+1. change interface queues to only-hardware-queues and queue type for only-hardware to none for all ethernet interfaces
+2. on each interface change TX and RX flow control to On and loop protect to on

@@ -3,7 +3,10 @@ add-apt-repository ppa:certbot/certbot
 apt install python-certbot-nginx
 pip3 install certbot-dns-route53
 certbot --version
+certbot certonly --dns-route53 -d *.domain.com --server https://acme-v02.api.letsencrypt.org/directory (for wildcard certs)
+OR
 certbot certonly --dns-route53 -d *.domain.com   (wait a few minutes and the result will be:
+
 IMPORTANT NOTES:
  - Congratulations! Your certificate and chain have been saved at:
    /etc/letsencrypt/live/domain.com/fullchain.pem
