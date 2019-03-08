@@ -1,0 +1,69 @@
+# to create user use:
+rabbitmqctl add_user myUser myPass
+
+# to make user an administrator run:
+rabbitmqctl set_user_tags myUser administrator
+
+# list users
+rabbitmqctl list_users
+
+references:
+https://www.rabbitmq.com/rabbitmqctl.8.html#User_Management
+
+# access the graphical interface to manage resources
+http://10.110.10.34:15672/#/
+
+
+# script to add queues, exchanges and bindings
+
+#!/bin/bash
+
+# function for declaring queue and bind it to exchange
+function declareQueue {
+   queue_name=$1
+   queue_route_key=$2
+   source=$3
+
+   python ./rabbitmqadmin declare queue --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST name=$queue_name durable=true arguments='{"x-max-priority": 4}'
+   python ./rabbitmqadmin declare binding --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST source=$source destination=$queue_name destination_type=queue routing_key=$queue_route_key
+}
+
+# configuration
+HOST="197.0.13.17"
+VHOST="/"
+USER="guest"
+PASSWORD="guest"
+DEFAULT_EXCHANGE='oro.default'
+
+# download rabbitmq admin script from server_host
+wget "http://server_host:15672/cli/rabbitmqadmin"
+
+# delete if exist "oro.default" exchange and redeclare it with type "topic"
+python ./rabbitmqadmin delete exchange --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST name="oro.default"
+python ./rabbitmqadmin declare exchange --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST name="oro.default" type="topic" durable=true
+
+# declare "oro.alternate" exchange with type "fanout"
+python ./rabbitmqadmin declare exchange --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST name="oro.alternate" type="fanout" durable=true
+# declare "oro.default" queue if it does not exist and bind it to "oro.alternate" exchange
+declareQueue "oro.default" "" "oro.alternate"
+# set policy to "oro.default" exchange to use "oro.alternate" exchange as a alternate exchange
+rabbitmqctl set_policy AE "^oro.default$" '{"alternate-exchange":"oro.alternate"}'
+
+# declare below queues with routing mask and bind them to "oro.default" exchange
+declareQueue "oro.service_jobs" "oro.message_queue.job.#" $DEFAULT_EXCHANGE
+declareQueue "oro.cron" "oro.cron.#" $DEFAULT_EXCHANGE
+declareQueue "oro.data_audit" "oro.data_audit.#" $DEFAULT_EXCHANGE
+declareQueue "oro.search" "oro.search.#" $DEFAULT_EXCHANGE
+declareQueue "oro.search" "oro.website.search.#" $DEFAULT_EXCHANGE
+declareQueue "oro.redirect" "oro.redirect.#" $DEFAULT_EXCHANGE
+declareQueue "oro.pricing" "oro_pricing.#" $DEFAULT_EXCHANGE
+declareQueue "oro.image_resize" "imageResize" $DEFAULT_EXCHANGE
+declareQueue "oro.email" "oro.email.#" $DEFAULT_EXCHANGE
+
+# show list of declared exchanges, declared queues and bindings
+python ./rabbitmqadmin list exchanges --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST
+python ./rabbitmqadmin list queues --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST
+python ./rabbitmqadmin list bindings --vhost=$HOST --user=$USER --password=$PASSWORD --vhost=$VHOST
+
+# remove rabbitmq admin script
+rm ./rabbitmqadmin

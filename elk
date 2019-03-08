@@ -45,42 +45,6 @@ PUT metricbeat-2018.11.26/_mapping/doc
 {
    "doc": {
       "properties": {
-        "system.network.name": {
-          "type": "text",
-          "fielddata": true
-        }
-      }
-   }
-}
-
-PUT metricbeat-2018.11.26/_mapping/doc
-{
-   "doc": {
-      "properties": {
-        "system.filesystem.mount_point": {
-          "type": "text",
-          "fielddata": true
-        }
-      }
-   }
-}
-
-PUT metricbeat-2018.11.26/_mapping/doc
-{
-   "doc": {
-      "properties": {
-        "system.process.name": {
-          "type": "text",
-          "fielddata": true
-        }
-      }
-   }
-}
-
-PUT metricbeat-2018.11.26/_mapping/doc
-{
-   "doc": {
-      "properties": {
         "beat.name": {
           "type": "text",
           "fielddata": true
@@ -99,7 +63,41 @@ wget https://github.com/lmenezes/cerebro/releases/download/v0.8.1/cerebro-0.8.1.
 https://www.elastic.co/guide/en/logstash/current/logstash-config-for-filebeat-modules.html
 https://www.elastic.co/guide/en/logstash/current/config-examples.html
 
-12. other informations
+12. snapshots/backups and restore
+- setup NFS share to be accessible by all elk nodes: https://help.ubuntu.com/community/SettingUpNFSHowTo
+apt-get install nfs-kernel-server nfs-common -y
+add to /etc/exports:
+/var/lib/elasticsearch/snapshots       IP_ES_NODE_2/32(rw,fsid=0,insecure,no_subtree_check,async)
+/var/lib/elasticsearch/snapshots       IP_ES_NODE_3/32(rw,fsid=0,insecure,no_subtree_check,async)
+chmod -R 0777 /var/lib/elasticsearch/snapshots
+systemctl restart nfs-kernel-server.service
+on the other nodes mount th share:
+mount -t nfs -o proto=tcp,port=2049 IP_ES_NODE_1:/var/lib/elasticsearch/snapshots /var/lib/elasticsearch/snapshots
+and to /etc/fstab:
+IP_ES_NODE_1:/var/lib/elasticsearch/snapshots   /var/lib/elasticsearch/snapshots   nfs    auto  0  0
+
+- add the snapshot path to elasticsearch config file on all 3 nodes: path.repo: ["/var/lib/elasticsearch/snapshots"]
+- restart elasticsearch on all 3 nodes
+
+- register desired location for backups via kibana/development or via curl:
+PUT /_snapshot/my_es_snapshots
+{
+    "type": "fs",
+    "settings": {
+        "location": "/var/lib/elasticsearch/snapshots",
+        "compress": true
+    }
+}
+
+- run snapshot:
+curl -XPUT 'http://localhost:9200/_snapshot/my_es_snapshots/%3Csnapshot-%7Bnow%2Fd%7D%3E?wait_for_completion=true'
+format will be snapshot-2018.05.11
+
+- check snapshot
+curl -XGET 'http://localhost:9200/_snapshot/digitax_es_snapshots/snapshot-2019.01.08?pretty'
+
+
+13. other informations
 - before elasticsearch restart disable sharding to avoid re-allocation
 - elasticsearch and ASG on AWS should be avoided
 - shards re-allocation is CPU intensive

@@ -1,0 +1,42 @@
+his is the full step-by-step procedure to resync a master-slave replication from scratch:
+
+At the master:
+
+RESET MASTER;
+FLUSH TABLES WITH READ LOCK;
+SHOW MASTER STATUS;
+And copy the values of the result of the last command somewhere.
+
+Without closing the connection to the client (because it would release the read lock) issue the command to get a dump of the master:
+
+mysqldump -u root -p --all-databases > /a/path/mysqldump.sql
+Now you can release the lock, even if the dump hasn't ended yet. To do it, perform the following command in the MySQL client:
+
+UNLOCK TABLES;
+Now copy the dump file to the slave using scp or your preferred tool.
+
+At the slave:
+
+Open a connection to mysql and type:
+
+STOP SLAVE;
+Load master's data dump with this console command:
+
+mysql -uroot -p < mysqldump.sql
+Sync slave and master logs:
+
+RESET SLAVE;
+CHANGE MASTER TO MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=98;
+Where the values of the above fields are the ones you copied before.
+
+Finally, type:
+
+START SLAVE;
+To check that everything is working again, after typing:
+
+SHOW SLAVE STATUS;
+you should see:
+
+Slave_IO_Running: Yes
+Slave_SQL_Running: Yes
+That's it!

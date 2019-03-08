@@ -15,6 +15,8 @@ GRANT ALL PRIVILEGES ON DB.* TO 'USER'@'%' IDENTIFIED BY 'PSW' WITH GRANT OPTION
 GRANT ALL PRIVILEGES ON DB TO 'DB_USER'@'localhost';
 FLUSH PRIVILEGES;
 
+# clone db on the same server. on the root in the terminal run:
+mysqldump db_name | mysql new_db_name
 
 
 # list users
@@ -33,6 +35,10 @@ mysqldump -h DB_HOST -u DB_USER -p DB_PSW > DB_BKP_FILE.sql
 mysql -h DB_HOST -u DB_USER -p DB_PSW < DB_BKP_FILE.sql
 mysqldump -u <db_username> -h <db_host> -p db_name table_name > table_name.sql
 
+# ATTENTION Dumping the database structure for all tables with no data :
+to dump without data use the parameter --no-data (for example to restore table sync between master and slave)
+mysqldump --no-data -u someuser -p mydatabase
+
 # restore single db
 mysql -p -u[user] [database] < db_backup.dump
 
@@ -47,6 +53,11 @@ source db_backup.dump;
 
 
 # master slave replication
+
+# ATTENTION  Dumping the database structure for all tables with no data :
+to dump without data use the parameter --no-data (for example to restore table sync between master and slave)
+mysqldump --no-data -u someuser -p mydatabase
+
 # add on master in /etc/my.cnf under mysql section:
 log-bin
 server_id=1
@@ -95,3 +106,12 @@ mysql> CHANGE MASTER TO master_use_gtid=slave_pos;
 mysql> START SLAVE;
 # reference 1: https://www.tecmint.com/mariadb-master-slave-replication-on-centos-rhel-debian/
 # reference 2: https://mariadb.com/resources/blog/mariadb-10-gtid-explained
+
+
+
+# maridb slow log queries parameters - add in my.cnf
+# slow query logging settings
+slow_query_log = 1
+long_query_time = 1
+slow_query_log_file = /var/log/mysql/slow-query.log
+log_slow_verbosity = 'query_plan'

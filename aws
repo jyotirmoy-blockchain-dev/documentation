@@ -10,6 +10,14 @@ aws s3 cp  s3://<bucket>/<key> - | \
 bzip -best | \
 aws s3 cp - s3://<bucket>/<key>.bz2
 
+# restore from glacier
+aws s3api restore-object --bucket S3_BUCKET --key FOLDER/OBJECT --restore-request '{"Days":25,"GlacierJobParameters":{"Tier":"Standard"}}' --profile AWS_PROFILE
+s3cmd restore --recursive --access_key=(key) --secret_key=(key) -D 10 s3://bucketname/path/to/directory/
+
+# object rename via boto3
+s3 = boto3.resource('s3')
+s3.Object('my_bucket','my_file_new').copy_from(CopySource='my_bucket/my_file_old')
+s3.Object('my_bucket','my_file_old').delete()
 
 
 ### AWS EC2 Commands Examples ###
@@ -70,6 +78,8 @@ aws codepipeline create-pipeline --generate-cli-skeleton
 
 # cloud formation stack creation with parameter file
 aws cloudformation create-stack --stack-name STACK_NAME  --template-body file://cf_app_stack.json  --parameters file://parameters_app.json --profile AWS_PROFILE --capabilities CAPABILITY_IAM
+# for larger templates use s3 and cf deploy command
+aws cloudformation deploy --template-file template.json --stack-name STACK_NAME --s3-bucket BUCKET --capabilities CAPABILITY_IAM
 https://aws.amazon.com/blogs/devops/passing-parameters-to-cloudformation-stacks-with-the-aws-cli-and-powershell/
 
 
@@ -90,3 +100,7 @@ Conditions:
     CreateSecondFQDNRule: !And
       - !Not [ !Equals [!Ref ApplicationFQDN2, 'NA']]
       - !Not [ !Equals [!Ref Priority2, '']]
+
+### ECS new ARN format issues
+If you enable that option now new service will be found (discoved on 28.12.2018):
+Type: “AWS::ApplicationAutoScaling::ScalableTarget” is failing during creation because  service names will not be found anymore.

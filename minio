@@ -1,0 +1,8 @@
+# mirroring
+mc mirror server/bucket local_folder --exclude "*db_bkp*" --overwrite
+
+# copy
+mc cp local_folder/file server/folder_dest/
+
+# configure
+mc config host add <ALIAS> <YOUR-S3-ENDPOINT> <YOUR-ACCESS-KEY> <YOUR-SECRET-KEY> <API-SIGNATURE>

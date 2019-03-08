@@ -38,3 +38,6 @@ sudo gpasswd -a your-user-name vboxsf
 wget https://github.com/atom/atom/releases/download/v1.21.1/atom-amd64.deb
 dpkg -i atom-amd64.deb
 install additional plugins: language-chef, language-habitat, language-inspec, language-rspec, linter, linter-foodcritic, linter-rubocop
+
+11. flush dns on mac os yosemite
+sudo killall -HUP mDNSResponder; sleep 2;

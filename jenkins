@@ -47,3 +47,14 @@ http://jenkins-ubuntu:8080
 git submodule update --init
 git submodule update --recursive --remote
 ansible-playbook -i inventory/digitax_pilot kubernetes.yml --private-key ~/.ssh/ssh.pem --vault-password-file ~/.ssh/ssh.pem
+
+# forgot password for your Jenkins - no access
+One other way would be to manually edit the configuration file for your admin user (e.g. /var/lib/jenkins/users/admin/config.xml) and update the contents of passwordHash:
+<passwordHash>#jbcrypt:$2a$10$razd3L1aXndFfBNHO95aj.IVrFydsxkcQCcLmujmFQzll3hcUrY7S</passwordHash>
+Once you have done this, just restart Jenkins and log in using this password:
+test
+
+other simplest solution is to completely disable security - change true to false in /var/lib/jenkins/config.xml file.
+<useSecurity>true</useSecurity>
+Then just restart Jenkins, by
+sudo service jenkins restart

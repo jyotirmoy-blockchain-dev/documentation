@@ -109,3 +109,56 @@ cipher AES-256-CBC
 verb 4
 mute 20
 auth SHA256
+
+# revoke clients, in easy-rsa frolder from /etc/openvpn run:
+. ./vars
+./revoke-full client2
+- make sure certificate and keys are in /etc/openvpn/keys and not on another server
+
+# script to generate client keys on another machine
+
+#!/bin/bash
+rm -rf openvpn zip-credentials
+
+aws s3 sync s3://MY_AWS/OPENVPN LOCAL_OPENVPN
+aws  s3 sync s3://MY_AWS/OPENVPN_CREDENTIALS OPENVPN_CREDENTIALS
+
+mkdir -p OPENVPN_CREDENTIALS
+cd OPENVPN_CREDENTIALS
+chmod -R 755 *
+
+source ./vars
+
+cp 	openssl-1.0.0.cnf openssl.cnf
+ls -lth
+# This is a bug, please export the KEY_CN when using --batch
+#export KEY_CN=$USERNAME_VPN
+echo -en "\n\n\n\n\n\n\n\n\n\ny\ny\n" | ./build-key --batch $USERNAME_VPN
+ls -lth keys/
+
+
+mkdir -p tmp/OPENVPN_CONFIG.tblk
+cp vpn.conf tmp/OPENVPN_CONFIG.tblk/
+cp keys/ca.crt tmp/OPENVPN_CONFIG.tblk/
+#cp keys/ta.key tmp/OPENVPN_CONFIG.tblk/
+
+cp keys/$USERNAME_VPN.crt tmp/OPENVPN_CONFIG.tblk/
+cp keys/$USERNAME_VPN.key tmp/OPENVPN_CONFIG.tblk/
+
+sed -i "s/cert johndoe.crt/cert $USERNAME_VPN.crt/g" tmp/digitax-pilot-orange.tblk/digitax-pilot-orange.conf
+sed -i "s/key johndoe.key/key $USERNAME_VPN.key/g" tmp/digitax-pilot-orange.tblk/digitax-pilot-orange.conf
+sed -i "s/109.166.196.226/vpn-server.ro/g" tmp/OPENVPN_CONFIG.tblk/vpn.conf
+
+
+cd tmp
+
+zip -r $USERNAME_VPN.zip OPENVPN_CONFIG.tblk
+mv $USERNAME_VPN.zip ../../openvpn-credentials/$USERNAME_VPN.zip
+cd ../
+rm -rf tmp
+cd ../
+
+ls -lth
+echo "Updating S3"
+aws -s3 sync digitax-pilot-ovpn s3://digitax-project/digitax-pilot-ovpn
+aws s3 sync openvpn-pilot-credentials s3://digitax-project/openvpn-pilot-credentials

@@ -2,14 +2,26 @@
 mongo -u admin -p --authenticationDatabase admin
 mongo -u admin -p --eval  "printjson(db.adminCommand( { listDatabases: 1 } ))" --authenticationDatabase admin
 
-### create user
+### create database and user
+# authenticate with root user and admin password
+mongo -u root -p --authenticationDatabase admin
+
+# create db
+use newdb
+
+# add an item into a collection, both collection "products" and db "newdb" will be created
+db.products.insert( { item: "card", qty: 15 } )
+
+# create user inside the db after the use statement!
 db.createUser(
-  {
-    user: "myUserAdmin",
-    pwd: "abc123",
-    roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
-  }
+   {
+     user: "user",
+     pwd: "psw",
+     roles: [ "readWrite", "dbAdmin" ]
+   }
 )
+
+# you have now succesfully created the user for the db
 
 ### backup database
 /usr/bin/mongodump --username root --password "PASSWORD" --authenticationDatabase admin --db DB_NAME --gzip --out ./test_bkp
