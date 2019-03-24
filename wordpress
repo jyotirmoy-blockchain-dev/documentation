@@ -1,5 +1,5 @@
 # wordpress install - quick guide
-yum apt install nginx mysql-client mysql-server php-fpm php-mysql php-xml php-xmlrpc php-curl php-gd php-imagick php-cli \
+apt install nginx mysql-client mysql-server php-fpm php-mysql php-xml php-xmlrpc php-curl php-gd php-imagick php-cli \
  php-dev php-imap php-mbstring php-opcache php-redis php-soap php-zip nano git curl g++ \
  make gnupg gnupg2 gnupg1 zip dirmngr jq ruby python3-pip -y
 

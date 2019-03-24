@@ -277,3 +277,40 @@ kubectl config use-context docker-for-desktop
 # how to delete flannel adapters
 ip link delete cni0
 ip link delete flannel.1
+
+# see kubernetes secrets:
+kubectl get secret gitlab-registry --namespace=revsys-com --export -o yaml | kubectl apply --namespace=devspectrum-dev -f -
+# certificates
+kubectl describe certificate bchain-wildcard-cert -n kube-system
+# certificates
+kubectl get secret bchain-wildcard-cert-tls -n kube-system
+# certificates
+kubectl get secret bchain-wildcard-cert-tls --namespace=kube-system --export -o yaml |  rancher kubectl apply --namespace=ci-cd -f -
+# certificates
+kubectl logs -n kube-system -l app=cert-manager -c cert-manager
+# certificates
+kubectl describe clusterissuer letsencrypt-staging -n kube-system
+# ingresses
+kubectl get ing -n ci-cd
+# ingresses
+kubectl describe ing jenkins -n ci-cd
+# pods
+kubectl get pods -n ci-cd
+# ingresses
+kubectl describe certificate selfsigned-cert  -n cert-manager-test
+# certificates
+kubectl describe clusterissuer test-selfsigned -n certmanager-test
+# certificates
+kubectl get issuer --all-namespaces
+# certificates
+kubectl get clusterissuer --all-namespaces
+# certificates
+kubectl describe clusterissuer letsencrypt-staging -n kube-system
+# certificates
+kubectl get certificate --all-namespaces
+# get events from namespace
+kubectl get ev -w -n ci-cd
+# certificates
+kubectl get order --all-namespaces
+# get events from all namespaces
+kubectl get ev -w --all-namespaces

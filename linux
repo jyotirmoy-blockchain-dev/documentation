@@ -5,6 +5,16 @@ curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'  
 curl ipinfo.io/ip                                                                 # find external IP
 
 curl -u USERNAME http://IP && curl -k https://IP                                  # curl commands
+
+# post to API
+curl -X POST --header "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' http://internal-ElbParit-H4HVVV38-13512002.eu-central-1.elb.amazonaws.com:8545
+
+# curl over insecure
+curl -K URL or --insecure
+
+# curl get header info
+curl -I URL
+
 find. -name *.png -type f -print | xargs tar -cvzf images.tar.gz                  # arhiving with xarg
 cat urls.txt | xargs wget                                                         # xarg with wget
 ls /etc/*.conf | xargs -i cp {} /home/likegeeks/Desktop/out                       # cp xargs

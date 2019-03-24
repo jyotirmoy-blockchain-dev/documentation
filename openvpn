@@ -162,3 +162,8 @@ ls -lth
 echo "Updating S3"
 aws -s3 sync digitax-pilot-ovpn s3://digitax-project/digitax-pilot-ovpn
 aws s3 sync openvpn-pilot-credentials s3://digitax-project/openvpn-pilot-credentials
+
+
+# give access to openvpn clients to network behind vpn server
+- add push route command into the openvpn server config
+- run: iptables -t nat -A POSTROUTING -s LAN_SUBNET_CIDR -o eth0 -j MASQUERADE
