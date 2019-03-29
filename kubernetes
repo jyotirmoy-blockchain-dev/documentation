@@ -314,3 +314,5 @@ kubectl get ev -w -n ci-cd
 kubectl get order --all-namespaces
 # get events from all namespaces
 kubectl get ev -w --all-namespaces
+# create configmap from json file
+kubectl create configmap prometheus-scrapper-config --from-file=scrapper-config.json -n maintenance
